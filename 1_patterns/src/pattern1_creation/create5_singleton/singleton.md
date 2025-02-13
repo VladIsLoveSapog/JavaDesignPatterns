@@ -277,3 +277,4 @@ public enum EnumSingleton {
 
 - Design Patterns with Java: Singleton
 - Введение в паттерны проектирования: Одиночка
+- [Habr: Синглтон — корень всех зол](https://habr.com/ru/companies/piter/articles/874428/)
