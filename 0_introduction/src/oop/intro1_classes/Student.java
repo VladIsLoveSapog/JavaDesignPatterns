@@ -6,7 +6,7 @@ import java.util.Objects;
  * Класс студента - обычный оопшный класс с полями и методами.
  */
 public class Student {
-    private int age;                //возраст студента
+    private int age;             //возраст студента
 
     private Gender gender;      //пол студента
 
