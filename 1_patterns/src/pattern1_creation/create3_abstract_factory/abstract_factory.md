@@ -2,6 +2,14 @@
 
 ## Абстрактная фабрика
 
+### Аналогия из жизни
+
+Представьте сети быстрого питания: McDonald's и KFC. Каждая сеть — это «фабрика», которая производит согласованное **семейство продуктов**: бургер + картошка + напиток выдержаны в едином стиле, используют одни соусы, упаковку и рецептуру.
+
+Нельзя заказать «бургер от McDonald's с картошкой от KFC» — это нарушило бы согласованность вкуса, порций и подачи. Аналогично, паттерн Абстрактная Фабрика гарантирует, что клиент всегда получает **совместимое семейство объектов**, не смешивая несовместимые реализации.
+
+---
+
 **Абстрактная фабрика** — это порождающий паттерн проектирования, который позволяет создавать семейства связанных
 объектов, не привязываясь к конкретным классам создаваемых объектов.
 
@@ -20,6 +28,55 @@
 образом независимость клиентского кода от конкретных классов продуктов. Это позволяет легко добавлять новые семейства
 продуктов без изменения существующего кода.
 
+#### Проблема без паттерна
+
+Посмотрим, как выглядит код **без** Абстрактной Фабрики:
+
+```java
+// АНТИПАТТЕРН: сервис мебели с if-else по стилю
+public class FurnitureService {
+    public void furnishRoom(String style) {
+        Chair chair;
+        Sofa sofa;
+        Table table;
+
+        if (style.equals("baroque")) {
+            chair = new BaroqueChair();
+            sofa  = new BaroqueSofa();
+            table = new BaroqueTable();
+        } else if (style.equals("gothic")) {
+            chair = new GoticChair();
+            sofa  = new GoticSofa();
+            table = new GoticTable();
+        } else if (style.equals("modern")) {
+            chair = new ModernChair();
+            sofa  = new ModernSofa();
+            table = new ModernTable();
+        } else {
+            throw new IllegalArgumentException("Unknown style: " + style);
+        }
+        // использование ...
+    }
+}
+```
+
+Проблемы этого подхода:
+
+1. **Добавить новый стиль = менять везде**: каждый сервис, каждый метод с `if-else` надо найти и обновить.
+2. **Ничто не мешает смешать стили**: никакой компилятор не запретит написать `chair = new BaroqueChair()` рядом с `sofa = new ModernSofa()`.
+3. **Нарушение SRP**: `FurnitureService` одновременно знает бизнес-логику комнаты *и* детали создания каждого стиля мебели.
+
+#### Отличие от Фабричного метода
+
+> **АФ вырастает из ФМ, когда продуктов становится больше одного.**
+
+| Критерий | Фабричный метод | Абстрактная Фабрика |
+|---|---|---|
+| **Что создаёт** | Один продукт одного типа | Семейство взаимосвязанных продуктов |
+| **Основа** | Наследование (подкласс переопределяет метод) | Композиция (клиент использует объект-фабрику) |
+| **Типичный пример** | `DocumentFactory.createDocument()` | `UIFactory.createButton()` + `.createCheckbox()` |
+| **Когда применять** | Нужно варьировать тип одного создаваемого объекта | Нужно гарантировать совместимость нескольких создаваемых объектов |
+
 #### Применение
 
 Паттерн Абстрактная Фабрика рекомендуется использовать в следующих случаях:
@@ -32,21 +89,23 @@
 
 ### Реализация
 
-1. Абстрактные продукты объявляют интерфейсы продуктов, которые связаны друг с другом по смыслу, но выполняют разные
-   функции.
-2. Конкретные продукты — большой набор классов, которые относятся к различным абстрактным продуктам (кресло/ столик), но
-   имеют одни и те же вариации (Барокко/Модерн).
-3. Абстрактная фабрика объявляет методы создания различных абстрактных продуктов (кресло/столик).
-4. Конкретные фабрики относятся каждая к своей вариации
-   продуктов (Барокко/Модерн) и реализуют методы абстрактной фабрики, позволяя создавать все продукты определённой
-   вариации.
-5. Несмотря на то, что конкретные фабрики порождают конкретные продукты, сигнатуры их методов должны возвращать
-   соответствующие абстрактные продукты. Это позволит клиентскому коду, использующему фабрику, не привязываться к
+1. **Абстрактные продукты** объявляют интерфейсы продуктов, которые связаны друг с другом по смыслу, но выполняют разные
+   функции. Именно эти интерфейсы будет использовать клиентский код — он никогда не увидит конкретных классов.
+2. **Конкретные продукты** — большой набор классов, которые относятся к различным абстрактным продуктам (кресло/столик), но
+   имеют одни и те же вариации (Барокко/Модерн). Каждый конкретный продукт создаётся только своей фабрикой, что
+   исключает случайное смешение несовместимых объектов.
+3. **Абстрактная фабрика** объявляет методы создания различных абстрактных продуктов (кресло/столик). Наличие всех
+   методов в одном интерфейсе — это и есть гарантия согласованности: нельзя получить кресло барокко с диваном модерн.
+4. **Конкретные фабрики** относятся каждая к своей вариации продуктов (Барокко/Модерн) и реализуют методы абстрактной
+   фабрики, позволяя создавать все продукты определённой вариации. Добавить новый стиль = добавить одну новую
+   фабрику, не трогая существующий код.
+5. Несмотря на то, что конкретные фабрики порождают конкретные продукты, **сигнатуры их методов должны возвращать
+   соответствующие абстрактные продукты**. Это позволит клиентскому коду, использующему фабрику, не привязываться к
    конкретным классам продуктов. Клиент сможет работать с любыми вариациями продуктов через абстрактные интерфейсы.
 
 ### Примеры
 
-#### Пример [FurnitureMain](code%2FFurnitureMain.java)
+#### Пример 1: [FurnitureMain](code%2FFurnitureMain.java)
 
 Создадим систему, которая может создавать кресла, столы и диваны в разных стилях: Барокко, Готика, Модерн.
 
@@ -56,19 +115,19 @@
 
 ```java
 /**
- * Общий интерфейс кресел
+ * [AbstractProduct] Общий интерфейс кресел
  */
 public interface Chair {
 }
 
 /**
- * Общий интерфейс диванов
+ * [AbstractProduct] Общий интерфейс диванов
  */
 public interface Sofa {
 }
 
 /**
- * Общий интерфейс столов
+ * [AbstractProduct] Общий интерфейс столов
  */
 public interface Table {
 }
@@ -80,19 +139,19 @@ public interface Table {
 
 ```java
 /**
- * Кресло в стиле барокко
+ * [ConcreteProduct] Кресло в стиле барокко
  */
 public record BaroqueChair() implements Chair {
 }
 
 /**
- * Диван в стиле барокко
+ * [ConcreteProduct] Диван в стиле барокко
  */
 public record BaroqueSofa() implements Sofa {
 }
 
 /**
- * Стол в стиле барокко
+ * [ConcreteProduct] Стол в стиле барокко
  */
 public record BaroqueTable() implements Table {
 }
@@ -102,19 +161,19 @@ public record BaroqueTable() implements Table {
 
 ```java
 /**
- * Кресло в стиле готика
+ * [ConcreteProduct] Кресло в стиле готика
  */
 public record GoticChair() implements Chair {
 }
 
 /**
- * Диван в стиле готика
+ * [ConcreteProduct] Диван в стиле готика
  */
 public record GoticSofa() implements Sofa {
 }
 
 /**
- * Стол в стиле готика
+ * [ConcreteProduct] Стол в стиле готика
  */
 public record GoticTable() implements Table {
 }
@@ -124,19 +183,19 @@ public record GoticTable() implements Table {
 
 ```java
 /**
- * Кресло в стиле модерн
+ * [ConcreteProduct] Кресло в стиле модерн
  */
 public record ModernChair() implements Chair {
 }
 
 /**
- * Диван в стиле модерн
+ * [ConcreteProduct] Диван в стиле модерн
  */
 public record ModernSofa() implements Sofa {
 }
 
 /**
- * Стол в стиле модерн
+ * [ConcreteProduct] Стол в стиле модерн
  */
 public record ModernTable() implements Table {
 }
@@ -146,30 +205,13 @@ public record ModernTable() implements Table {
 
 ```java
 /**
- * Интерфейс асбтрактной фабрики мебели.
- * В методах используются общие типы, что позволяет достичь слабойсвязанности
- * (не привязываться к определенным реализациям классов)
+ * [AbstractFactory] Интерфейс абстрактной фабрики мебели.
+ * Наличие всех трёх методов в одном интерфейсе = гарантия согласованности семейства.
+ * В методах используются общие типы, что позволяет достичь слабой связанности.
  */
 public interface AbstractFurnitureFactory {
-    /**
-     * Метод создания какого-то дивана
-     *
-     * @return диван
-     */
     Sofa createSofa();
-
-    /**
-     * Метод создания какого-то кресла
-     *
-     * @return кресло
-     */
     Chair createChair();
-
-    /**
-     * Метод создания какого-то стола
-     *
-     * @return стол
-     */
     Table createTable();
 }
 ```
@@ -179,148 +221,50 @@ public interface AbstractFurnitureFactory {
 **Барокко**
 
 ```java
-import pattern1_creation.create3_abstract_factory.code.AbstractFurnitureFactory;
-import pattern1_creation.create3_abstract_factory.code.Chair;
-import pattern1_creation.create3_abstract_factory.code.Sofa;
-import pattern1_creation.create3_abstract_factory.code.Table;
-
 /**
- * Фабрика мебели в стиле барокко.
- * Сигнатура методов должна также работать с общими типами,
- * но при этом возвращаем мы уже элементы мебели в стиле барокко.
+ * [ConcreteFactory] Фабрика мебели в стиле барокко.
+ * Возвращаем конкретные типы, но сигнатура — абстрактные.
  */
 public class BaroqueFurnitureFactory implements AbstractFurnitureFactory {
-    /**
-     * Создание дивана в стиле барокко
-     *
-     * @return диван в стиле барокко
-     */
-    @Override
-    public Sofa createSofa() {
-        return new BaroqueSofa();
-    }
-
-    /**
-     * Создание кресла в стиле барокко
-     *
-     * @return кресло в стиле барокко
-     */
-    @Override
-    public Chair createChair() {
-        return new BaroqueChair();
-    }
-
-    /**
-     * Создание стола в стиле барокко
-     *
-     * @return стол в стиле барокко
-     */
-    @Override
-    public Table createTable() {
-        return new BaroqueTable();
-    }
+    @Override public Sofa createSofa()   { return new BaroqueSofa(); }
+    @Override public Chair createChair() { return new BaroqueChair(); }
+    @Override public Table createTable() { return new BaroqueTable(); }
 }
 ```
 
 **Готика**
 
 ```java
-import pattern1_creation.create3_abstract_factory.code.AbstractFurnitureFactory;
-import pattern1_creation.create3_abstract_factory.code.Chair;
-import pattern1_creation.create3_abstract_factory.code.Sofa;
-import pattern1_creation.create3_abstract_factory.code.Table;
-
 /**
- * Фабрика мебели в стиле готика.
- * Сигнатура методов должна также работать с общими типами,
- * но при этом возвращаем мы уже элементы мебели в стиле готика.
+ * [ConcreteFactory] Фабрика мебели в стиле готика.
  */
 public class GoticFurnitureFactory implements AbstractFurnitureFactory {
-    /**
-     * Создание дивана в стиле готика
-     *
-     * @return диван в стиле готика
-     */
-    @Override
-    public Sofa createSofa() {
-        return new GoticSofa();
-    }
-
-    /**
-     * Создание кресла в стиле готика
-     *
-     * @return кресло в стиле готика
-     */
-    @Override
-    public Chair createChair() {
-        return new GoticChair();
-    }
-
-    /**
-     * Создание стола в стиле готика
-     *
-     * @return стол в стиле готика
-     */
-    @Override
-    public Table createTable() {
-        return new GoticTable();
-    }
+    @Override public Sofa createSofa()   { return new GoticSofa(); }
+    @Override public Chair createChair() { return new GoticChair(); }
+    @Override public Table createTable() { return new GoticTable(); }
 }
 ```
 
 **Модерн**
 
 ```java
-import pattern1_creation.create3_abstract_factory.code.AbstractFurnitureFactory;
-import pattern1_creation.create3_abstract_factory.code.Chair;
-import pattern1_creation.create3_abstract_factory.code.Sofa;
-import pattern1_creation.create3_abstract_factory.code.Table;
-
 /**
- * Фабрика мебели в стиле модерн.
- * Сигнатура методов должна также работать с общими типами,
- * но при этом возвращаем мы уже элементы мебели в стиле модерн.
+ * [ConcreteFactory] Фабрика мебели в стиле модерн.
  */
 public class ModernFurnitureFactory implements AbstractFurnitureFactory {
-    /**
-     * Создание дивана в стиле модерн
-     *
-     * @return диван в стиле модерн
-     */
-    @Override
-    public Sofa createSofa() {
-        return new ModernSofa();
-    }
-
-    /**
-     * Создание кресла в стиле модерн
-     *
-     * @return кресло в стиле модерн
-     */
-    @Override
-    public Chair createChair() {
-        return new ModernChair();
-    }
-
-    /**
-     * Создание стола в стиле модерн
-     *
-     * @return стол в стиле модерн
-     */
-    @Override
-    public Table createTable() {
-        return new ModernTable();
-    }
+    @Override public Sofa createSofa()   { return new ModernSofa(); }
+    @Override public Chair createChair() { return new ModernChair(); }
+    @Override public Table createTable() { return new ModernTable(); }
 }
 ```
 
 ##### Класс для тестирования
 
 ```java
-import pattern1_creation.create3_abstract_factory.code.baroque.BaroqueFurnitureFactory;
-import pattern1_creation.create3_abstract_factory.code.gotik.GoticFurnitureFactory;
-import pattern1_creation.create3_abstract_factory.code.modern.ModernFurnitureFactory;
-
+/**
+ * [Client] Переменная типа AbstractFurnitureFactory — можно поменять всё семейство,
+ * изменив одну строку.
+ */
 public class FurnitureMain {
     public static void main(String[] args) {
         //Под тип абстрактной фабрики засунули фабрику мебели в стиле модерн
@@ -347,6 +291,42 @@ public class FurnitureMain {
 }
 ```
 
+---
+
+#### Пример 2: [NotificationMain](code%2Fexample2_notifications%2FNotificationMain.java)
+
+Система уведомлений с поддержкой Email и SMS. Сначала демонстрируется антипаттерн (`if-else`
+в `BadNotificationService`), затем — чистый вариант через Абстрактную Фабрику.
+
+```
+example2_notifications/
+├── BadNotificationService.java   ← антипаттерн: if-else
+├── NotificationHeader.java       ← AbstractProduct 1
+├── NotificationBody.java         ← AbstractProduct 2
+├── AbstractNotificationFactory.java ← AbstractFactory
+├── email/
+│   ├── EmailHeader.java          ← ConcreteProduct
+│   ├── EmailBody.java            ← ConcreteProduct
+│   └── EmailFactory.java         ← ConcreteFactory
+├── sms/
+│   ├── SmsHeader.java            ← ConcreteProduct
+│   ├── SmsBody.java              ← ConcreteProduct
+│   └── SmsFactory.java           ← ConcreteFactory
+└── NotificationMain.java         ← Client
+```
+
+Ключевой момент — клиентский метод `sendNotification` не содержит ни одного упоминания `Email` или `SMS`:
+
+```java
+private static void sendNotification(AbstractNotificationFactory factory,
+                                     String recipient, String message) {
+    NotificationHeader header = factory.createHeader(recipient);
+    NotificationBody body = factory.createBody(recipient, message);
+    System.out.println("  Header: " + header.format());
+    System.out.println("  Body:   " + body.format());
+}
+```
+
 ### Плюсы данного паттерна
 
 - **Согласованность семейства продуктов**: Паттерн обеспечивает создание совместимых объектов из одного семейства, что
@@ -369,5 +349,5 @@ public class FurnitureMain {
 
 ### Источники
 
-- Design Patterns with Java: Abstract Factory 
+- Design Patterns with Java: Abstract Factory
 - Введение в паттерны проектирования: Абстрактная фабрика

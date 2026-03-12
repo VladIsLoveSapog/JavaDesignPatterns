@@ -4,6 +4,14 @@ import pattern1_creation.create3_abstract_factory.code.baroque.BaroqueFurnitureF
 import pattern1_creation.create3_abstract_factory.code.gotik.GoticFurnitureFactory;
 import pattern1_creation.create3_abstract_factory.code.modern.ModernFurnitureFactory;
 
+/**
+ * [Client]
+ * Клиентский код, использующий Абстрактную Фабрику.
+ *
+ * <p>Переменная типа {@link AbstractFurnitureFactory} — можно поменять всё семейство
+ * мебели (стиль), изменив одну строку. Клиент не импортирует ни один конкретный
+ * продукт — только абстрактные интерфейсы {@link Chair}, {@link Sofa}, {@link Table}.
+ */
 public class FurnitureMain {
     public static void main(String[] args) {
         //Под тип абстрактной фабрики засунули фабрику мебели в стиле модерн

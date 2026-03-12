@@ -6,9 +6,12 @@ import pattern1_creation.create3_abstract_factory.code.Sofa;
 import pattern1_creation.create3_abstract_factory.code.Table;
 
 /**
+ * [ConcreteFactory]
  * Фабрика мебели в стиле готика.
- * Сигнатура методов должна также работать с общими типами,
- * но при этом возвращаем мы уже элементы мебели в стиле готика.
+ *
+ * <p>Внутри методов возвращаем конкретные типы ({@link GoticChair} и т.д.),
+ * но сигнатура методов использует абстрактные типы ({@code Chair}, {@code Sofa},
+ * {@code Table}) — клиент не зависит от конкретных реализаций.
  */
 public class GoticFurnitureFactory implements AbstractFurnitureFactory {
     /**
