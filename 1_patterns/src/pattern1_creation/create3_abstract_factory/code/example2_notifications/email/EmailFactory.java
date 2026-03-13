@@ -5,12 +5,14 @@ import pattern1_creation.create3_abstract_factory.code.example2_notifications.No
 import pattern1_creation.create3_abstract_factory.code.example2_notifications.NotificationHeader;
 
 /**
- * [ConcreteFactory]
  * Фабрика email-уведомлений.
  *
- * <p>Возвращает конкретные типы {@link EmailHeader} и {@link EmailBody},
- * но сигнатура методов использует абстрактные интерфейсы — клиент не зависит
- * от конкретных классов.
+ * <p>Реализует {@link AbstractNotificationFactory} и создаёт все продукты
+ * для канала Email: {@link EmailHeader} и {@link EmailBody}. Сигнатуры методов
+ * возвращают абстрактные типы, что обеспечивает слабую связанность
+ * с клиентским кодом.</p>
+ *
+ * @see AbstractNotificationFactory
  */
 public class EmailFactory implements AbstractNotificationFactory {
 

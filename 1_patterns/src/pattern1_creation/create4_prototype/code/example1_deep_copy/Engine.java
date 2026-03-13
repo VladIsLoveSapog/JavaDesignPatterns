@@ -1,13 +1,27 @@
 package pattern1_creation.create4_prototype.code.example1_deep_copy;
 
+import java.util.Objects;
+
 /**
- * Класс двигателя. Обратите внимание, что раз данный класс - record, то методы toString, equals и hashCode для него по
- * умолчанию переопределяются правильно. Это пригодится при реализации данных методов в классе Auto.
- *
- * @param hp     лошадиные силы
- * @param volume объём
+ * Класс двигателя.
  */
-public record Engine(Integer hp, Integer volume) implements Cloneable {
+public class Engine implements Cloneable {
+    private final Integer hp;
+    private final Integer volume;
+
+    public Engine(Integer hp, Integer volume) {
+        this.hp = hp;
+        this.volume = volume;
+    }
+
+    public Integer getHp() {
+        return hp;
+    }
+
+    public Integer getVolume() {
+        return volume;
+    }
+
     /**
      * Метод копирования.
      * super.clone(); - выполняет поверхностное копирование. И поскольку в классе двигателя все поля являются
@@ -19,5 +33,23 @@ public record Engine(Integer hp, Integer volume) implements Cloneable {
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Engine engine = (Engine) o;
+        return Objects.equals(hp, engine.hp) && Objects.equals(volume, engine.volume);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(hp, volume);
+    }
+
+    @Override
+    public String toString() {
+        return "Engine{hp=" + hp + ", volume=" + volume + "}";
     }
 }

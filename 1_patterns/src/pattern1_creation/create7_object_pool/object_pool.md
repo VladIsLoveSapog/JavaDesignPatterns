@@ -26,127 +26,48 @@
 
 ### Структура паттерна Пул объектов
 
-Паттерн Пул объектов включает в себя следующие компоненты:
+| Роль в паттерне | Описание | Пример 1 (БД) | Пример 2 (Игра) |
+|-----------------|----------|---------------|-----------------|
+| **[Reusable](code%2FReusable.java)** | Интерфейс с методом `reset()` для сброса состояния перед повторной выдачей | [Reusable](code%2FReusable.java) | [Reusable](code%2FReusable.java) |
+| **ConcreteReusable** | Конкретный объект, управляемый пулом | [DatabaseConnection](code%2Fexample1_connection_pool%2FDatabaseConnection.java) | [Bullet](code%2Fexample2_bullet_pool%2FBullet.java) |
+| **ObjectPool** | Управляет коллекцией объектов: выдаёт (`borrow`), принимает обратно (`return`), при необходимости создаёт новые | [ConnectionPool](code%2Fexample1_connection_pool%2FConnectionPool.java) | [BulletPool](code%2Fexample2_bullet_pool%2FBulletPool.java) |
 
-1. **ObjectPool (Пул объектов)**: Описание: Класс, который управляет пулом объектов. Отвечает за выдачу объектов
-   клиентам и их возвращение в пул.
-    - Методы:
-        - ```borrowObject()```: Выдаёт объект из пула.
-        - ```returnObject(Object obj)```: Принимает объект обратно в пул.
-        - ```createObject()```: Создаёт новый объект при необходимости.
-2. **Reusable (Повторно используемый)**: Интерфейс или абстрактный класс, который определяет общие методы для объектов,
-   управляемых пулом.
-3. **ConcreteReusable (Конкретный повторно используемый)**: Класс, реализующий интерфейс Reusable. Представляет
-   конкретный тип объектов, управляемых пулом.
+---
 
 ### Примеры
 
-#### Пример [Пул подключений к БД](code%2FDatabaseConnection.java)
+#### Пример 1: [Пул подключений к БД](code%2Fexample1_connection_pool%2FConnectionPool.java)
 
-Рассмотрим пример реализации паттерна Пул объектов для управления соединениями к базе данных. Создадим пул соединений,
-который будет предоставлять клиентам соединения из заранее созданного пула и возвращать их обратно после использования.
+Классический пример — пул соединений к базе данных. Создание TCP-соединения, аутентификация и выделение
+ресурсов на сервере — дорогие операции. Пул позволяет переиспользовать уже открытые соединения.
 
-##### Reusable - Повторно используемый объект
+- [DatabaseConnection](code%2Fexample1_connection_pool%2FDatabaseConnection.java) — конкретный повторно используемый объект.
+  Каждое соединение имеет идентификатор и флаг `inUse`. При сбросе вызывается `disconnect()`.
+- [ConnectionPool](code%2Fexample1_connection_pool%2FConnectionPool.java) — пул соединений.
+  Создаёт начальный набор соединений и может расширяться до `maxSize`.
+  Реализован как синглтон с синхронизированными методами.
+- [ConnectionPoolMain](code%2Fexample1_connection_pool%2FConnectionPoolMain.java) — демонстрация
+  полного цикла: создание пула, получение и возврат соединений,
+  динамическое расширение, обработка исчерпания пула.
 
-```java
-public interface Reusable {
-    void reset();
-}
-```
+---
 
-##### Конкретная реализация повторно используемого объекта
+#### Пример 2: [Пул игровых снарядов](code%2Fexample2_bullet_pool%2FBulletPool.java)
 
-```java
-public class DatabaseConnection implements Reusable {
-    private boolean inUse;
-    private String connectionId;
+В компьютерных играх снаряды (пули, ракеты) создаются и уничтожаются десятки–сотни раз в секунду.
+Постоянное создание объектов нагружает сборщик мусора и вызывает «подтормаживания» (GC pauses).
+Пул снарядов решает эту проблему, переиспользуя объекты без новых аллокаций.
 
-    public DatabaseConnection(String connectionId) {
-        this.connectionId = connectionId;
-        this.inUse = false;
-        // Симуляция установки соединения
-        System.out.println("Соединение " + connectionId + " установлено.");
-    }
+- [Bullet](code%2Fexample2_bullet_pool%2FBullet.java) — игровой снаряд.
+  Хранит координаты, урон и статус активности. При сбросе координаты обнуляются.
+- [BulletPool](code%2Fexample2_bullet_pool%2FBulletPool.java) — пул снарядов.
+  В отличие от `ConnectionPool`, не использует синглтон — в игре может быть
+  несколько пулов для разных типов снарядов.
+- [GameMain](code%2Fexample2_bullet_pool%2FGameMain.java) — демонстрация игрового цикла:
+  выстрел → полёт → попадание → возврат в пул → повторный выстрел.
+  Показывает, что при повторном получении из пула возвращается тот же объект.
 
-    public boolean isInUse() {
-        return inUse;
-    }
-
-    public void connect() {
-        if (!inUse) {
-            inUse = true;
-            System.out.println("Соединение " + connectionId + " используется.");
-        } else {
-            System.out.println("Соединение " + connectionId + " уже используется.");
-        }
-    }
-
-    public void disconnect() {
-        if (inUse) {
-            inUse = false;
-            System.out.println("Соединение " + connectionId + " освобождено.");
-        }
-    }
-
-    @Override
-    public void reset() {
-        disconnect();
-        // Дополнительная очистка состояния соединения при необходимости
-        System.out.println("Соединение " + connectionId + " сброшено.");
-    }
-
-    public String getConnectionId() {
-        return connectionId;
-    }
-}
-```
-
-##### Реализация пула
-
-```java
-public class DatabaseConnection implements Reusable {
-    private boolean inUse;
-    private String connectionId;
-
-    public DatabaseConnection(String connectionId) {
-        this.connectionId = connectionId;
-        this.inUse = false;
-        // Симуляция установки соединения
-        System.out.println("Соединение " + connectionId + " установлено.");
-    }
-
-    public boolean isInUse() {
-        return inUse;
-    }
-
-    public void connect() {
-        if (!inUse) {
-            inUse = true;
-            System.out.println("Соединение " + connectionId + " используется.");
-        } else {
-            System.out.println("Соединение " + connectionId + " уже используется.");
-        }
-    }
-
-    public void disconnect() {
-        if (inUse) {
-            inUse = false;
-            System.out.println("Соединение " + connectionId + " освобождено.");
-        }
-    }
-
-    @Override
-    public void reset() {
-        disconnect();
-        // Дополнительная очистка состояния соединения при необходимости
-        System.out.println("Соединение " + connectionId + " сброшено.");
-    }
-
-    public String getConnectionId() {
-        return connectionId;
-    }
-}
-```
+---
 
 ### Плюсы данного паттерна
 
@@ -166,3 +87,10 @@ public class DatabaseConnection implements Reusable {
 - **Проблемы с потокобезопасностью**: В многопоточной среде необходимо обеспечить синхронизацию доступа к пулу, что
   может привести к снижению производительности.
 - **Скрытые зависимости**: Клиентский код зависит от пула объектов, что может усложнить тестирование и модульность.
+
+### Источники
+
+- Design Patterns: Elements of Reusable Object-Oriented Software (GoF)
+- [Habr: Паттерн Object Pool](https://habr.com/ru/articles/732088/)
+- [Refactoring.Guru: Object Pool](https://refactoring.guru/design-patterns)
+- [Wikipedia: Object pool pattern](https://en.wikipedia.org/wiki/Object_pool_pattern)

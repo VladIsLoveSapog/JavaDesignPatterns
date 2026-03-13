@@ -15,7 +15,7 @@ package pattern1_creation.create5_singleton.code.example1_eager_init;
  */
 public class EagerSingleton {
 
-    /*
+    /**
      * final — гарантирует, что ссылка не будет перезаписана после инициализации.
      * static — поле принадлежит классу, а не экземпляру, поэтому существует
      *          в единственном экземпляре на весь ClassLoader.
@@ -23,7 +23,7 @@ public class EagerSingleton {
      */
     private static final EagerSingleton INSTANCE = new EagerSingleton();
 
-    /*
+    /**
      * Приватный конструктор — запрещает создание экземпляров через new.
      * Без него компилятор сгенерирует публичный конструктор по умолчанию,
      * и любой код сможет создать сколько угодно объектов.

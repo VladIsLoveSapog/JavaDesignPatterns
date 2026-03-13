@@ -28,10 +28,14 @@ import java.util.Map;
  */
 public enum EnumSingleton {
 
-    /** Единственный экземпляр. */
+    /**
+     * Единственный экземпляр
+     */
     INSTANCE;
 
-    /* Хранилище пар "ключ — значение" для конфигурации. */
+    /**
+     * Хранилище пар "ключ — значение" для конфигурации.
+     */
     private final Map<String, String> config = new HashMap<>();
 
     /**

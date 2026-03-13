@@ -20,7 +20,9 @@ public class ThreadSafeSingleton {
 
     private static ThreadSafeSingleton instance;
 
-    /** Приватный конструктор — запрещает создание экземпляров извне. */
+    /**
+     * Приватный конструктор — запрещает создание экземпляров извне.
+     */
     private ThreadSafeSingleton() {}
 
     /**

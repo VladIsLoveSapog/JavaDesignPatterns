@@ -4,20 +4,29 @@ import pattern1_creation.create3_abstract_factory.code.example2_notifications.em
 import pattern1_creation.create3_abstract_factory.code.example2_notifications.sms.SmsFactory;
 
 /**
- * [Client]
- * Демонстрация паттерна Абстрактная Фабрика на примере уведомлений.
+ * Демонстрация использования паттерна Абстрактная Фабрика на примере уведомлений.
  *
- * <p>Сначала показывается антипаттерн (if-else в {@link BadNotificationService}),
- * затем — чистый вариант через фабрики.
- *
- * <p>Переменная типа {@link AbstractNotificationFactory} позволяет поменять
- * весь канал уведомлений, изменив одну строку.
+ * <p>Показывает основные сценарии работы с {@link AbstractNotificationFactory}:</p>
+ * <ul>
+ *   <li>Сначала демонстрируется антипаттерн ({@code if-else}
+ *       в {@link BadNotificationService})</li>
+ *   <li>Затем — чистый вариант через фабрики ({@link EmailFactory},
+ *       {@link SmsFactory})</li>
+ *   <li>Переключение канала уведомлений изменением одной строки</li>
+ * </ul>
  */
 public class NotificationMain {
 
     /**
      * Отправляет уведомление через переданную фабрику.
-     * Клиентский код не знает, email это или sms.
+     *
+     * <p>Клиентский код не знает, email это или SMS — он работает
+     * только с абстрактными типами {@link NotificationHeader}
+     * и {@link NotificationBody}.</p>
+     *
+     * @param factory   фабрика уведомлений для конкретного канала
+     * @param recipient получатель уведомления
+     * @param message   текст сообщения
      */
     private static void sendNotification(AbstractNotificationFactory factory,
                                          String recipient, String message) {

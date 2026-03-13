@@ -3,10 +3,11 @@ package pattern1_creation.create3_abstract_factory.code.example2_notifications.e
 import pattern1_creation.create3_abstract_factory.code.example2_notifications.NotificationBody;
 
 /**
- * [ConcreteProduct]
- * Тело email-уведомления.
+ * Конкретный продукт — тело email-уведомления.
  *
- * <p>Создаётся только через {@link EmailFactory} — не инстанциируй напрямую в клиентском коде.
+ * <p>Реализует интерфейс {@link NotificationBody} и форматирует тело сообщения
+ * в стиле электронной почты. Экземпляры создаются через фабрику
+ * {@link EmailFactory}, что гарантирует согласованность семейства продуктов.</p>
  */
 public class EmailBody implements NotificationBody {
 

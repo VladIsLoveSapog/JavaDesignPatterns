@@ -2,32 +2,27 @@ package pattern1_creation.create6_multiton.task;
 
 public class MultitonMain {
     public static void main(String[] args) {
-//        // Получение фабрик для разных типов логгеров
-//        LoggerFactory authFactory1 = LoggerFactoryMultiton.getFactory(LoggerType.AUTHENTICATION);
-//        LoggerFactory authFactory2 = LoggerFactoryMultiton.getFactory(LoggerType.AUTHENTICATION);
+//        // Получение экспортёров через мультитон
+//        DocumentExporter pdfExporter1 = DocumentExporterMultiton.getExporter(ExportFormat.PDF);
+//        DocumentExporter pdfExporter2 = DocumentExporterMultiton.getExporter(ExportFormat.PDF);
 //
-//        LoggerFactory paymentFactory1 = LoggerFactoryMultiton.getFactory(LoggerType.PAYMENT);
-//        LoggerFactory paymentFactory2 = LoggerFactoryMultiton.getFactory(LoggerType.PAYMENT);
+//        DocumentExporter csvExporter1 = DocumentExporterMultiton.getExporter(ExportFormat.CSV);
+//        DocumentExporter csvExporter2 = DocumentExporterMultiton.getExporter(ExportFormat.CSV);
 //
-//        LoggerFactory notificationFactory1 = LoggerFactoryMultiton.getFactory(LoggerType.NOTIFICATION);
-//        LoggerFactory notificationFactory2 = LoggerFactoryMultiton.getFactory(LoggerType.NOTIFICATION);
+//        DocumentExporter xmlExporter1 = DocumentExporterMultiton.getExporter(ExportFormat.XML);
+//        DocumentExporter xmlExporter2 = DocumentExporterMultiton.getExporter(ExportFormat.XML);
 //
-//        // Проверка, что для каждого типа логгера создаётся только одна фабрика
-//        System.out.println("Проверка экземпляров фабрик:");
-//        System.out.println("authFactory1 == authFactory2: " + (authFactory1 == authFactory2));
-//        System.out.println("paymentFactory1 == paymentFactory2: " + (paymentFactory1 == paymentFactory2));
-//        System.out.println("notificationFactory1 == notificationFactory2: " + (notificationFactory1 == notificationFactory2));
+//        // Проверка, что для каждого формата существует только один экземпляр
+//        System.out.println("Проверка единственности экземпляров:");
+//        System.out.println("pdfExporter1 == pdfExporter2: " + (pdfExporter1 == pdfExporter2));
+//        System.out.println("csvExporter1 == csvExporter2: " + (csvExporter1 == csvExporter2));
+//        System.out.println("xmlExporter1 == xmlExporter2: " + (xmlExporter1 == xmlExporter2));
 //
-//        System.out.println("\nСоздание логгеров через фабрики:");
+//        System.out.println("\nЭкспорт документов:");
 //
-//        // Создание логгеров через фабрики
-//        Logger authLogger = authFactory1.createLogger();
-//        Logger paymentLogger = paymentFactory1.createLogger();
-//        Logger notificationLogger = notificationFactory1.createLogger();
-//
-//        // Запись логов
-//        authLogger.log("Пользователь успешно аутентифицирован.");
-//        paymentLogger.log("Платёж обработан успешно.");
-//        notificationLogger.log("Уведомление отправлено пользователю.");
+//        // Экспорт содержимого в разные форматы
+//        System.out.println(pdfExporter1.export("Отчёт за март"));
+//        System.out.println(csvExporter1.export("имя;возраст;город"));
+//        System.out.println(xmlExporter1.export("<record>данные</record>"));
     }
 }

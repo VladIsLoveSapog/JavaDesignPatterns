@@ -27,7 +27,7 @@ import java.util.Objects;
  */
 public class DoubleCheckedLockingSingleton {
 
-    /*
+    /**
      * volatile — обеспечивает два свойства:
      * 1. Видимость (visibility): запись в это поле одним потоком
      *    немедленно видна всем остальным потокам.

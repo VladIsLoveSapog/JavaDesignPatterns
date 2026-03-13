@@ -41,121 +41,49 @@
 
 ### Примеры
 
-#### Пример[Пример](code%2FShapeFactoryMultiton.java) с фабриками фигур
+#### [Пример](code%2Fexample1_shape_factory) с фабриками фигур
 
 Предположим, у нас есть различные фигуры: ```Circle```, ```Rectangle``` и ```Triangle```. Для каждой фигуры необходимо
 иметь соответствующую фабрику (CircleFactory, RectangleFactory, TriangleFactory), которая отвечает за создание
 экземпляров этой фигуры. Используя паттерн Мультитон, мы можем управлять этими фабриками, обеспечивая, что для каждой
 фигуры существует только одна фабрика.
 
-##### Интерфейс Продукта
+Все конкретные фабрики (`CircleFactory`, `RectangleFactory`, `TriangleFactory`) имеют **package-private** модификатор
+доступа — создать их напрямую в обход мультитона из другого пакета невозможно. Клиентский код получает фабрику только
+через [`ShapeFactoryMultiton.getInstance(ShapeType)`](code%2Fexample1_shape_factory%2FShapeFactoryMultiton.java).
 
-```java
-public interface Shape {
-    void draw();
-}
-```
+Демонстрация использования: [`ShapeFactoryMain`](code%2Fexample1_shape_factory%2FShapeFactoryMain.java)
 
-##### Конкретные продукты
+#### [Пример](code%2Fexample2_app_config) с конфигурацией приложения
 
-```java
-public class Circle implements Shape {
-    private String name;
+Мультитон конфигураций приложения по окружениям (DEV, STAGING, PROD). Класс
+[`AppConfig`](code%2Fexample2_app_config%2FAppConfig.java) имеет **package-private** модификатор — создать экземпляр
+извне пакета невозможно. Вся работа с конфигурацией идёт через
+[`AppConfigMultiton.getConfig(Environment)`](code%2Fexample2_app_config%2FAppConfigMultiton.java).
 
-    public Circle(String name) {
-        this.name = name;
-    }
+Демонстрация использования: [`AppConfigMain`](code%2Fexample2_app_config%2FAppConfigMain.java)
 
-    @Override
-    public void draw() {
-        System.out.println("Рисование круга: " + name);
-    }
-}
+### Отличие от Singleton
 
-public class Rectangle implements Shape {
-    private String name;
+| Критерий                  | Singleton                              | Multiton                                          |
+|---------------------------|----------------------------------------|---------------------------------------------------|
+| Количество экземпляров    | Один на класс                          | Один на каждый уникальный ключ                    |
+| Идентификация             | Не требуется (единственный экземпляр)  | По ключу (enum, строка и т.д.)                    |
+| Хранение                  | Статическое поле `instance`            | `Map<Key, Instance>`                              |
+| Метод доступа             | `getInstance()`                        | `getInstance(key)` / `getConfig(key)`             |
+| Типичное применение       | Логгер, пул соединений                 | Фабрики по типу, конфиги по окружению             |
+| Расширяемость             | Добавление нового экземпляра невозможно| Добавление нового ключа расширяет набор           |
 
-    public Rectangle(String name) {
-        this.name = name;
-    }
+### Связь с другими паттернами
 
-    @Override
-    public void draw() {
-        System.out.println("Рисование прямоугольника: " + name);
-    }
-}
+- **Singleton** — Мультитон является прямым расширением Синглтона: вместо одного экземпляра управляет набором экземпляров
+  по ключам. Если ключ один — Мультитон вырождается в Синглтон.
+- **Factory Method** — в примере с фабриками фигур Мультитон хранит и предоставляет фабрики, каждая из которых реализует
+  паттерн Фабричный метод. Мультитон контролирует *доступ* к фабрикам, а Фабричный метод — *создание* продуктов.
+- **Object Pool** — оба паттерна управляют набором предсозданных объектов. Разница в том, что Object Pool выдаёт объект
+  во временное пользование (с возвратом), а Мультитон — навсегда по ключу.
 
-public class Triangle implements Shape {
-    private String name;
-
-    public Triangle(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public void draw() {
-        System.out.println("Рисование треугольника: " + name);
-    }
-}
-```
-
-##### Интерфейс Фабрики
-
-```java
-public interface ShapeFactory {
-    Shape createShape(String name);
-}
-```
-
-##### Конкретные фабрики
-
-```java
-public class CircleFactory implements ShapeFactory {
-    @Override
-    public Shape createShape(String name) {
-        return new Circle(name);
-    }
-}
-
-public class RectangleFactory implements ShapeFactory {
-    @Override
-    public Shape createShape(String name) {
-        return new Rectangle(name);
-    }
-}
-
-public class TriangleFactory implements ShapeFactory {
-    @Override
-    public Shape createShape(String name) {
-        return new Triangle(name);
-    }
-}
-```
-
-##### Мультитон
-
-```java
-public class ShapeFactoryMultiton {
-    private static final Map<ShapeType, ShapeFactory> instance = new EnumMap<>(ShapeType.class);
-
-    static {
-        instance.put(CIRCLE, new CircleFactory());
-        instance.put(RECTANGLE, new RectangleFactory());
-        instance.put(TRIANGLE, new TriangleFactory());
-    }
-
-    // Приватный конструктор для предотвращения создания экземпляров
-    private ShapeFactoryMultiton() {
-    }
-
-    // Статический метод доступа
-    public static synchronized ShapeFactory getInstance(ShapeType type) {
-        return instance.get(type);
-    }
-}
-```
-
-### Плюсы данного
+### Плюсы данного паттерна
 
 - **Контроль над количеством экземпляров**: Позволяет ограничить количество экземпляров класса, обеспечивая
   единственность для каждого ключа.
@@ -174,3 +102,9 @@ public class ShapeFactoryMultiton {
   управляемого количества экземпляров.
 - **Необходимость управления жизненным циклом**: Требует дополнительных механизмов для управления жизненным циклом и
   уничтожением экземпляров, если это необходимо.
+
+### Источники
+
+- Design Patterns with Java: Multiton
+- Введение в паттерны проектирования: Мультитон
+- Effective Java, Third Edition, Joshua Bloch — Item 1: Consider static factory methods instead of constructors

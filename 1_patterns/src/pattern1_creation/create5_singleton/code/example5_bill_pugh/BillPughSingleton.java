@@ -21,7 +21,9 @@ package pattern1_creation.create5_singleton.code.example5_bill_pugh;
  */
 public class BillPughSingleton {
 
-    /** Приватный конструктор — запрещает создание экземпляров извне. */
+    /**
+     * Приватный конструктор — запрещает создание экземпляров извне.
+     */
     private BillPughSingleton() {}
 
     /**

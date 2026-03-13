@@ -3,10 +3,11 @@ package pattern1_creation.create3_abstract_factory.code.example2_notifications.e
 import pattern1_creation.create3_abstract_factory.code.example2_notifications.NotificationHeader;
 
 /**
- * [ConcreteProduct]
- * Заголовок email-уведомления.
+ * Конкретный продукт — заголовок email-уведомления.
  *
- * <p>Создаётся только через {@link EmailFactory} — не инстанциируй напрямую в клиентском коде.
+ * <p>Реализует интерфейс {@link NotificationHeader} и форматирует заголовок
+ * в стиле электронной почты. Экземпляры создаются через фабрику
+ * {@link EmailFactory}, что гарантирует согласованность семейства продуктов.</p>
  */
 public class EmailHeader implements NotificationHeader {
 
