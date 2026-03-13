@@ -1,5 +1,19 @@
 package pattern2_structural.struct5_decorator.task;
 
+/**
+ * Проверочный класс для задания по паттерну Декоратор.
+ *
+ * <p>Раскомментируйте код в методе main после реализации всех классов.
+ *
+ * <p><b>Ожидаемый вывод:</b>
+ * <pre>
+ * Espresso $1.99
+ * Latte, Milk $2.99
+ * Cappuccino, Milk, Sugar $3.59
+ * Espresso, Caramel Syrup, Caramel Syrup, Whipped Cream $4.19
+ * Latte, Milk, Sugar, Whipped Cream $3.89
+ * </pre>
+ */
 public class CoffeeShopMain {
 //    public static void main(String[] args) {
 //        // Заказ 1: Espresso
