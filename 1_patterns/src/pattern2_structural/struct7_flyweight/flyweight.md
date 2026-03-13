@@ -26,6 +26,16 @@
 - Хотите уменьшить количество создаваемых объектов для повышения производительности.
 - Требуется обеспечить разделение внутреннего и внешнего состояния объектов.
 
+### Структура паттерна
+
+| Участник | Роль | Пример 1 (Меню) | Пример 2 (Редактор) | Пример 3 (Лес) |
+|---|---|---|---|---|
+| **Flyweight** | Интерфейс легковеса — объявляет метод, принимающий внешнее состояние | `MenuEntry` | `CharacterFlyweight` | `TreeType` |
+| **Concrete Flyweight** | Конкретный легковес — хранит внутреннее состояние (неизменяемое) | `Pizza`, `Salad` | `ConcreteCharacterFlyweight` | `TreeType` |
+| **Flyweight Factory** | Фабрика — кэширует и повторно отдаёт легковесы | `MenuFactory` | `CharacterFlyweightFactory` | `TreeTypeFactory` |
+| **Context** | Контекст — хранит внешнее состояние и ссылку на легковес | заказ (стол → список блюд) | `CharacterContext` | `Tree` |
+| **Client** | Клиент — использует легковесы через фабрику | `Main` | `FlyweightPatternMain` | `Forest`, `ForestMain` |
+
 ### Реализация
 
 1. Разделите поля класса, который станет легковесом, на две части:
@@ -39,116 +49,65 @@
 5. Клиент должен хранить или вычислять значения внешнего состояния (контекст) и передавать его в методы объекта
    легковеса.
 
-### Примеры
-
-#### Примеры паттерна адаптер в стандартной библиотеке Java
+### Примеры паттерна легковес в стандартной библиотеке Java
 
 - **String Pool (Пул строк)** в Java является примером применения паттерна Легковес. В Java существует пул строк,
   который хранит все строковые литералы и обеспечивает их повторное использование. Это снижает потребление памяти,
   особенно при работе с большим количеством одинаковых строк.
 - **Кэширование объектов** Integer — ещё один пример паттерна Легковес. В Java для значений Integer от -128 до 127
   объекты кэшируются, что позволяет повторно использовать существующие экземпляры, снижая потребление памяти.
-- **Класс** Color в пакете ```java.awt``` использует паттерн Легковес для хранения стандартных цветов. Объекты
+- **Класс** Color в пакете `java.awt` использует паттерн Легковес для хранения стандартных цветов. Объекты
   стандартных цветов, таких как Color.RED, Color.BLUE, повторно используются, что экономит память.
 
-#### [Пример](code%2Fexample2_characters%2FFlyweightPatternMain.java) паттерна легковес при рахзработке текстового редактора
+### Примеры
 
-```java
-public interface CharacterFlyweight {
-    void display(CharacterContext context);
-}
-```
+#### [Пример 1](code%2Fexample1_menu%2FMain.java) — Меню ресторана
 
-```ConcreteCharacterFlyweight``` хранит внутреннее состояние: символ, шрифт и размер.
+Простейший пример: блюда в меню ресторана выступают легковесами. Пицца или салат с одним и тем же названием
+существует в единственном экземпляре, а номер стола (внешнее состояние) передаётся при подаче.
 
-```java
-public class ConcreteCharacterFlyweight implements CharacterFlyweight {
-    private final char character;
-    private final String font;
-    private final int size;
+| Участник | Класс |
+|---|---|
+| Flyweight | `MenuEntry` |
+| Concrete Flyweight | `Pizza`, `Salad` |
+| Flyweight Factory | `MenuFactory` |
+| Client | `Main` |
 
-    public ConcreteCharacterFlyweight(char character, String font, int size) {
-        this.character = character;
-        this.font = font;
-        this.size = size;
-    }
+#### [Пример 2](code%2Fexample2_characters%2FFlyweightPatternMain.java) — Текстовый редактор
 
-    @Override
-    public void display(CharacterContext context) {
-        System.out.println("Character: " + character + ", Font: " + font + ", Size: " + size +
-                ", Position: (" + context.getX() + ", " + context.getY() + ")");
-    }
-}
-```
+Символы текстового редактора: внутреннее состояние — символ, шрифт, размер; внешнее — позиция (x, y)
+на экране. При отображении строки `"HELLO HELLO"` из 11 символов создаётся всего 6 уникальных объектов,
+остальные берутся из кэша фабрики.
 
-```CharacterFlyweightFactory``` управляет созданием и хранением экземпляров ```ConcreteCharacterFlyweight```. Если необходимый экземпляр уже существует, он возвращается из кэша.
+| Участник | Класс |
+|---|---|
+| Flyweight | `CharacterFlyweight` |
+| Concrete Flyweight | `ConcreteCharacterFlyweight` |
+| Context | `CharacterContext` |
+| Flyweight Factory | `CharacterFlyweightFactory` |
+| Client | `FlyweightPatternMain` |
 
-```java
-import java.util.HashMap;
-import java.util.Map;
+#### [Пример 3](code%2Fexample3_forest%2FForestMain.java) — Лес
 
-public class CharacterFlyweightFactory {
-    private static final Map<String, CharacterFlyweight> flyweights = new HashMap<>();
+Классический пример из книги GoF: лес из множества деревьев нескольких пород. Каждый тип дерева
+(порода + цвет + текстура) — легковес, а координаты конкретного дерева — внешнее состояние.
+30 деревьев разделяют всего 3 объекта `TreeType`.
 
-    public static CharacterFlyweight getCharacter(char character, String font, int size) {
-        String key = character + "-" + font + "-" + size;
-        if (!flyweights.containsKey(key)) {
-            flyweights.put(key, new ConcreteCharacterFlyweight(character, font, size));
-            System.out.println("Creating new Flyweight for: " + key);
-        }
-        return flyweights.get(key);
-    }
+| Участник | Класс |
+|---|---|
+| Flyweight | `TreeType` |
+| Flyweight Factory | `TreeTypeFactory` |
+| Context | `Tree` |
+| Client | `Forest`, `ForestMain` |
 
-    public static int getFlyweightCount() {
-        return flyweights.size();
-    }
-}
-```
+### Сравнение примеров
 
-```CharacterContext``` содержит внешнее состояние: позицию символа в тексте.
-
-```java
-public class CharacterContext {
-    private final int x;
-    private final int y;
-
-    public CharacterContext(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    // Геттеры для внешнего состояния
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-}
-```
-
-```java
-public class FlyweightPatternMain {
-    public static void main(String[] args) {
-        String text = "HELLO HELLO";
-        String font = "Arial";
-        int size = 12;
-
-        int x = 0;
-        int y = 0;
-
-        for (char c : text.toCharArray()) {
-            CharacterFlyweight flyweight = CharacterFlyweightFactory.getCharacter(c, font, size);
-            CharacterContext context = new CharacterContext(x, y);
-            flyweight.display(context);
-            x += 10; // Увеличение позиции по оси X
-        }
-
-        System.out.println("Total Flyweight objects created: " + CharacterFlyweightFactory.getFlyweightCount());
-    }
-}
-```
+| Характеристика | Пример 1 (Меню) | Пример 2 (Редактор) | Пример 3 (Лес) |
+|---|---|---|---|
+| **Внутреннее состояние** | Название блюда | Символ, шрифт, размер | Порода, цвет, текстура |
+| **Внешнее состояние** | Номер стола | Позиция (x, y) | Координаты (x, y) |
+| **Масштаб экономии** | Единицы объектов (6 блюд в меню) | Десятки (6 из 11 символов) | Десятки–тысячи (3 типа на 30+ деревьев) |
+| **Способ передачи внешнего состояния** | Параметр метода `serve()` | Объект `CharacterContext` | Параметры метода `draw()` |
 
 ### Плюсы данного паттерна
 
@@ -166,6 +125,15 @@ public class FlyweightPatternMain {
   при повторном использовании объектов.
 - **Потенциальные проблемы с синхронизацией:** В многопоточных приложениях необходимо обеспечить корректное управление
   доступом к кэшу.
+
+### Легковес vs другие паттерны
+
+| Паттерн | Сходство | Различие |
+|---|---|---|
+| **Декоратор** | Оба работают с обёрткой вокруг объекта | Декоратор добавляет поведение, Легковес разделяет состояние для экономии памяти |
+| **Компоновщик** | Часто используются вместе — листья дерева компоновщика могут быть легковесами | Компоновщик строит иерархию «часть–целое», Легковес оптимизирует потребление памяти |
+| **Прокси** | Оба могут кэшировать объекты | Прокси контролирует доступ к объекту, Легковес разделяет внутреннее состояние между клиентами |
+| **Синглтон** | Оба ограничивают количество экземпляров | Синглтон гарантирует ровно один экземпляр, Легковес допускает несколько экземпляров с разным внутренним состоянием |
 
 ### Заключение
 

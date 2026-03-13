@@ -20,247 +20,78 @@
 #### Применение
 
 1. **"Виртуальный прокси"** - ленивая инициализация. Позволяет отложить создание тяжелого объекта до
-   необходимости/обращения. Загрузка больших объектов на старте программы может суещсвтенно повлиять на запуск по
+   необходимости/обращения. Загрузка больших объектов на старте программы может существенно повлиять на запуск по
    времени и памяти.
-2. **"Защищающий прокси"** - разраничение доступа к объекту/части системы. Через прокси реализуются методы проверки.
+2. **"Защищающий прокси"** - разграничение доступа к объекту/части системы. Через прокси реализуются методы проверки.
 3. **"Умный прокси/умная ссылка"** - когда необходимо кэшировать результаты запросов клиентов и управлять их жизненным
    циклом.
-4. **"Удаленный прокси"** - прокси транслирует запросы клиента в виде понятном удаленными сервису.
+4. **"Удаленный прокси"** - прокси транслирует запросы клиента в виде, понятном удалённому сервису.
 5. **"Логирующий прокси"** - хранит историю обращений к сервисному объекту.
-6. **"Сихнронизирующий прокси"** - проверка доступа к разделяемому ресурсу
-7. и тд. Примеров ещё не мало.
+6. **"Синхронизирующий прокси"** - проверка доступа к разделяемому ресурсу.
+7. и т.д. Примеров ещё немало.
+
+#### Какой тип прокси выбрать?
+
+| Тип прокси          | Задача                                     | Когда использовать                                                    |
+|----------------------|--------------------------------------------|-----------------------------------------------------------------------|
+| Виртуальный          | Ленивая инициализация / отложенная загрузка | Объект тяжёлый, а используется не всегда                              |
+| Защищающий           | Контроль доступа по ролям / правам          | Разные пользователи имеют разные права на операции                    |
+| Кэширующий (умный)   | Кэширование результатов                    | Повторные вызовы с одинаковыми параметрами — частое явление           |
+| Удалённый            | Работа с удалённым сервисом                 | Объект находится на другом сервере / в другом процессе                |
+| Логирующий           | Журналирование вызовов                      | Нужна история обращений для отладки или аудита                        |
+| Синхронизирующий     | Потокобезопасный доступ                     | К объекту обращаются из нескольких потоков одновременно               |
 
 ### Реализация
 
 1. Определите интерфейс, который бы сделал заместитель и оригинальный объект взаимозаменяемыми.
 2. Создайте класс заместителя. Он должен содержать ссылку на сервисный объект. Чаще всего, сервисный объект создаётся
    самим заместителем. В редких случаях, заместитель получает готовый сервисный объект от клиента через конструктор.
-3. Реализуйте методы заместителя в зависимости от его предназначения. В большинстве случаев, проделав какуюто полезную
+3. Реализуйте методы заместителя в зависимости от его предназначения. В большинстве случаев, проделав какую-то полезную
    работу, методы заместителя должны передать запрос сервисному объекту.
 4. Подумайте, не реализовать ли вам ленивую инициализацию сервисного объекта при первом обращении клиента к методам
    заместителя.
 
 ### Примеры
 
-#### Примеры паттерна адаптер в стандартной библиотеке Java
+#### Примеры паттерна прокси в стандартной библиотеке Java
 
 - В стандартной библиотеке Java **Прокси** также встречается.
-  Например: ```java.lang.reflect.Proxy```, ```java.rmi```, ```javax.servlet.Proxy ``` (Сложны для рассмотрения).
+  Например: `java.lang.reflect.Proxy`, `java.rmi`, `javax.servlet.Proxy` (сложны для рассмотрения).
 
-#### [Пример](code%2Fexample1_cache%2FCachingProxyMain.java) кэширующего прокси
+---
 
-```java
-public interface DataService {
-    String fetchData(String parameter);
-}
-```
+#### [Пример 1](code%2Fexample1_cache%2FCachingProxyMain.java) — кэширующий прокси
 
-```java
-public class DataServiceImpl implements DataService {
+Простой пример кэширующего прокси, который перехватывает вызовы к сервису данных и сохраняет результаты в локальный кэш.
+При повторном запросе с тем же параметром данные возвращаются мгновенно, без обращения к реальному сервису.
 
-    @Override
-    public String fetchData(String parameter) {
-        // Симуляция дорогостоящей операции, например, запрос к внешнему API
-        simulateExpensiveOperation();
-        return "Data for " + parameter;
-    }
+- [DataService.java](code%2Fexample1_cache%2FDataService.java) — интерфейс сервиса (Subject)
+- [DataServiceImpl.java](code%2Fexample1_cache%2FDataServiceImpl.java) — реальный сервис (Real Subject), симулирующий дорогостоящую загрузку
+- [CachingDataServiceProxy.java](code%2Fexample1_cache%2FCachingDataServiceProxy.java) — кэширующий прокси, хранящий результаты в `HashMap`
+- [CachingProxyMain.java](code%2Fexample1_cache%2FCachingProxyMain.java) — демонстрация: первый запрос загружает данные (~3 сек), повторный — из кэша
 
-    private void simulateExpensiveOperation() {
-        try {
-            System.out.println("Fetching data from external source...");
-            Thread.sleep(3000); // Симуляция задержки 3 секунды
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
+---
 
-```java
-import java.util.HashMap;
-import java.util.Map;
+#### [Пример 2](code%2Fexample3_protection%2FProtectionProxyMain.java) — защищающий прокси
 
-public class CachingDataServiceProxy implements DataService {
-    private DataService realDataService;
-    private Map<String, String> cache;
+Пример защищающего прокси (Protection Proxy), который контролирует доступ к документу в зависимости от роли
+пользователя. Три роли — READER, EDITOR, ADMIN — имеют разный набор разрешённых операций.
 
-    public CachingDataServiceProxy(DataService realDataService) {
-        this.realDataService = realDataService;
-        this.cache = new HashMap<>();
-    }
+- [Document.java](code%2Fexample3_protection%2FDocument.java) — интерфейс документа (Subject): `read()`, `write()`, `delete()`
+- [Role.java](code%2Fexample3_protection%2FRole.java) — перечисление ролей пользователей
+- [SecureDocument.java](code%2Fexample3_protection%2FSecureDocument.java) — реальный документ (Real Subject), хранящий содержимое
+- [ProtectionProxyDocument.java](code%2Fexample3_protection%2FProtectionProxyDocument.java) — защищающий прокси, проверяющий роль перед каждой операцией
+- [ProtectionProxyMain.java](code%2Fexample3_protection%2FProtectionProxyMain.java) — демонстрация: три пользователя с разными ролями работают с документом
 
-    @Override
-    public String fetchData(String parameter) {
-        if (cache.containsKey(parameter)) {
-            System.out.println("Returning cached data for: " + parameter);
-            return cache.get(parameter);
-        }
+---
 
-        System.out.println("No cache found for: " + parameter + ". Fetching data...");
-        String data = realDataService.fetchData(parameter);
-        cache.put(parameter, data);
-        return data;
-    }
-}
-```
+### Связь с другими паттернами
 
-```java
-public class CachingProxyMain {
-    public static void main(String[] args) {
-        // Создание реального объекта DataService
-        DataService realDataService = new DataServiceImpl();
-
-        // Создание прокси с функциональностью кэширования
-        DataService cachingProxy = new CachingDataServiceProxy(realDataService);
-
-        // Первый запрос с параметром "param1" — данные будут загружены и закэшированы
-        System.out.println("First request:");
-        String data1 = cachingProxy.fetchData("param1");
-        System.out.println("Received: " + data1);
-
-        System.out.println();
-
-        // Второй запрос с тем же параметром "param1" — данные будут получены из кэша
-        System.out.println("Second request:");
-        String data2 = cachingProxy.fetchData("param1");
-        System.out.println("Received: " + data2);
-
-        System.out.println();
-
-        // Запрос с новым параметром "param2" — данные будут загружены и закэшированы
-        System.out.println("Third request:");
-        String data3 = cachingProxy.fetchData("param2");
-        System.out.println("Received: " + data3);
-
-        System.out.println();
-
-        // Повторный запрос с параметром "param2" — данные будут получены из кэша
-        System.out.println("Fourth request:");
-        String data4 = cachingProxy.fetchData("param2");
-        System.out.println("Received: " + data4);
-    }
-}
-```
-
-#### [Пример](code%2Fexample1_cache%2FMain.java) кеширующего прокски (неудачный)
-
-Представим что у нас есть сервис - аналог YouTube, интерфейс которого заключается в возможности скачать видео, получить
-видео по имени, получить список видео. Но допустим что запрос к сервису и само скачивание видео операция долго и
-тяжелая. Для решении данной проблемы реализуем кеширующее прокси.
-
-```java
-public record Video(Integer id,
-                    String name) {
-}
-```
-
-```java
-/**
- * Интерфейс удаленного сервиса.
- * Интерфейс имеет тот же функционал, что и заворачиваемый в него объект.
- */
-public interface ThirdPartyYoutubeLib {
-    List<Video> getVideoList();
-
-    String getVideoName(Integer id);
-
-    Video downloadVideo(Integer id);
-}
-```
-
-```java
-/**
- * Конкретная реализация сервиса, который будет обернут в прокси.
- */
-public final class ThirdPartyYoutubeClass implements ThirdPartyYoutubeLib {
-    private final List<Video> downloadedVideo = List.of(
-            new Video(1, "Учимся программировать на Java."),
-            new Video(2, "Изучаем паттерны проектирования на Java."),
-            new Video(3, "Использование современных фреймоврков, реализующий паттерны проектирования."),
-            new Video(4, "использование паттренов проектирования в мультипоточном программировании."));
-
-    public List<Video> getVideoList() {
-        return downloadedVideo;
-    }
-
-    public String getVideoName(Integer id) {
-        return downloadedVideo.stream().filter(video -> video.id().equals(id)).findFirst().get().name();
-    }
-
-    public Video downloadVideo(Integer id) {
-        return downloadedVideo.stream().filter(video -> video.id().equals(id)).findFirst().get();
-    }
-}
-```
-
-```java
-/**
- * Пример "умного"/кешируюего прокси на сервисом
- * ThirdPartyYoutubeClass.
- * <p>
- * Прокси должен реализовывать интерфейс, аналогичный используемому сервису.
- * <p>
- * Пример простой и надуманный, но показательный.
- */
-public class CachedYoutubeProxy implements ThirdPartyYoutubeLib {
-    /**
-     * Сервис, который "заворачивается" в прокси
-     */
-    private ThirdPartyYoutubeClass thirdPartyYoutubeClass = new ThirdPartyYoutubeClass();
-    private List<Video> listCache;
-    private Video videoCache;
-
-    /**
-     * В конструктор передаем ссылку на сервис.
-     * Если у нас предусматривается только одно прокси, то в общем-то можно инициализировать поле сразу.
-     */
-    public CachedYoutubeProxy() {
-    }
-
-    /**
-     * Получение списка видео.
-     * Сначала выолняется проверка не лежит ли данный список в кэше.
-     * Последний загруженный список становится кэшированным.
-     *
-     * @return список видео.
-     */
-    @Override
-    public List<Video> getVideoList() {
-        if (Objects.isNull(listCache) || listCache.isEmpty()) listCache = thirdPartyYoutubeClass.getVideoList();
-        return listCache;
-    }
-
-    /**
-     * Получение имени видео.
-     * Сначала прверяется не лежит ли данное видео в кэше.
-     * Последнее загруженное видео становиться кэшированным.
-     *
-     * @param id видое имя которого необходимо найти
-     * @return имя видео
-     */
-    @Override
-    public String getVideoName(Integer id) {
-        if (Objects.isNull(videoCache) || !videoCache.id().equals(id))
-            videoCache = thirdPartyYoutubeClass.downloadVideo(id);
-        return videoCache.name();
-    }
-
-    /**
-     * Получение видео.
-     * Сначала прверяется не лежит ли данное видео в кэше.
-     * Последнее загруженное видео становиться кэшированным.
-     *
-     * @param id видео которое необходимо найти
-     * @return найденное видео
-     */
-    @Override
-    public Video downloadVideo(Integer id) {
-        if (Objects.isNull(videoCache) || !videoCache.id().equals(id))
-            videoCache = thirdPartyYoutubeClass.downloadVideo(id);
-        return videoCache;
-    }
-}
-```
+| Паттерн      | Сходство с Proxy                                    | Ключевое отличие                                                                                  |
+|--------------|------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| **Decorator** | Оба оборачивают объект и реализуют тот же интерфейс | Decorator **добавляет** новое поведение; Proxy **контролирует доступ** к существующему             |
+| **Adapter**   | Оба являются обёртками над другим объектом           | Adapter **меняет интерфейс**; Proxy сохраняет тот же интерфейс                                    |
+| **Facade**    | Оба упрощают взаимодействие с подсистемой            | Facade предоставляет **новый упрощённый интерфейс**; Proxy сохраняет интерфейс оригинала          |
 
 ### Плюсы данного паттерна
 

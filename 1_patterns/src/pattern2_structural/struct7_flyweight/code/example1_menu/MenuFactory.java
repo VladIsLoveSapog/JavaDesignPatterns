@@ -4,9 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Меню
+ * Фабрика легковесов (Flyweight Factory) — меню ресторана.
+ *
+ * <p>Хранит кэш ранее созданных легковесов в поле {@code menu} ({@link Map}).
+ * При запросе позиции через метод {@link #getPosition(String)} возвращает
+ * уже существующий экземпляр из кэша, вместо создания нового объекта.
+ *
+ * <p>Благодаря этому несколько заказов одной и той же пиццы или салата
+ * ссылаются на один и тот же объект в памяти.
  */
 public class MenuFactory {
+    /** Кэш легковесов: ключ — название блюда, значение — экземпляр {@link MenuEntry}. */
     private final Map<String, MenuEntry> menu = new HashMap<>();
 
     public MenuFactory() {
@@ -18,6 +26,12 @@ public class MenuFactory {
         menu.put("Salad Greek", new Salad("Salad Greek"));
     }
 
+    /**
+     * Возвращает позицию меню из кэша по названию.
+     *
+     * @param position название блюда
+     * @return экземпляр {@link MenuEntry} из кэша, или {@code null}, если позиция не найдена
+     */
     public MenuEntry getPosition(String position) {
         return menu.get(position);
     }
