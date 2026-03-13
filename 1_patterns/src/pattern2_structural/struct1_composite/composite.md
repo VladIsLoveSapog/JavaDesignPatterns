@@ -57,238 +57,38 @@
 - **Leaf (Лист)**: Конкретные компоненты, такие как ```JButton```, ```JLabel```, ```JTextField```.
 - **Composite (Композит)**: Контейнеры, такие как ```JPanel```, ```JFrame```, которые могут содержать другие компоненты.
 
-#### [Пример](code%2FMain.java) иерархии упаковок товаров
+---
 
-Преположим нам неоьходимо создать систему для обсчета стоиомсти товаров. Товары могут храниться как в шутчном виде, так
+#### [Пример 1](code%2Fexample1_product_boxes%2FMain.java) — Иерархия упаковок товаров
+
+Предположим, нам необходимо создать систему для обсчёта стоимости товаров. Товары могут храниться как в штучном виде, так
 и несколько разных товаров в коробке. Ценой коробки считается сумма всех товаров внутри коробки.
 
-```java
-/**
- * Общий интерфейс элементов дерева.
- */
-public interface Node {
-    /**
-     * Каждый элемент должен уметь посчитать свою цену.
-     * Некоторое общее дейсвтие для всех компонентов, в диаграмме эта функция
-     * называется execute()
-     *
-     * @return цена
-     */
-    Integer calcCost();
+| Роль в паттерне        | Класс                                                              | Описание                                      |
+|------------------------|--------------------------------------------------------------------|-----------------------------------------------|
+| **Component**          | [Node](code%2Fexample1_product_boxes%2FNode.java)                  | Общий интерфейс элементов дерева              |
+| **Composite (интерф.)** | [Container](code%2Fexample1_product_boxes%2FContainer.java)       | Интерфейс узла-контейнера                     |
+| **Leaf (интерф.)**     | [Leaf](code%2Fexample1_product_boxes%2FLeaf.java)                  | Маркерный интерфейс конечного элемента        |
+| **Composite (реализ.)** | [Box](code%2Fexample1_product_boxes%2FBox.java)                   | Коробка — контейнер для товаров               |
+| **Leaf (реализ.)**     | [Item](code%2Fexample1_product_boxes%2FItem.java)                  | Товар с фиксированной ценой                   |
+| **Демонстрация**       | [Main](code%2Fexample1_product_boxes%2FMain.java)                  | Построение дерева и подсчёт общей стоимости   |
 
-    /**
-     * Пусть каждый элемент может возвращать родителя
-     *
-     * @return родитель
-     */
-    Node getParent();
+---
 
-    /**
-     * Имеем возможность задать родителя
-     *
-     * @param parent родитель
-     */
-    void setParent(Node parent);
-}
-```
+#### [Пример 2](code%2Fexample2_file_system%2FMain.java) — Файловая система
 
-```java
-/**
- * Интерфейс узла контейнера.
- * Может содержать как листы, так и другие контейнеры.
- */
-public interface Container extends Node {
-    /**
-     * Добавление элемента в контейнер
-     * @param node элемент, который будет добавлен
-     */
-    void add(Node node);
+Файловая система — классический пример древовидной структуры: директории содержат файлы и другие директории.
+Размер директории вычисляется как сумма размеров всего её содержимого.
 
-    /**
-     * Удалить элемент из контейнера
-     * @param node элемент для удаления
-     */
-    void remove(Node node);
+| Роль в паттерне        | Класс                                                                              | Описание                                        |
+|------------------------|------------------------------------------------------------------------------------|-------------------------------------------------|
+| **Component**          | [FileSystemComponent](code%2Fexample2_file_system%2FFileSystemComponent.java)      | Общий интерфейс элементов файловой системы      |
+| **Composite (интерф.)** | [FileSystemContainer](code%2Fexample2_file_system%2FFileSystemContainer.java)     | Интерфейс контейнера файловой системы           |
+| **Leaf**               | [File](code%2Fexample2_file_system%2FFile.java)                                    | Файл с именем и размером                        |
+| **Composite (реализ.)** | [Directory](code%2Fexample2_file_system%2FDirectory.java)                         | Директория — контейнер для файлов и поддиректорий |
+| **Демонстрация**       | [Main](code%2Fexample2_file_system%2FMain.java)                                    | Построение дерева и вывод структуры             |
 
-    /**
-     * @return список детей
-     */
-    List<Node> getChildren();
-}
-```
-
-```java
-/**
- * Коробка, которая содержит товары.
- * Сама по себе коробка не имеет цены.
- * Цена коробки складывается из цены товаров в ней
- */
-public class Box implements Container {
-    private Node parent;                //родитель
-    private List<Node> children;  //список детей
-
-    /**
-     * Создание пустой коробки
-     *
-     * @param parent родитель
-     */
-    public Box(Node parent) {
-        this.parent = parent;
-        children = new LinkedList<>();
-    }
-
-    /**
-     * Добавление узла
-     *
-     * @param node элемент, который будет добавлен
-     */
-    @Override
-    public void add(Node node) {
-        children.add(node);
-    }
-
-    /**
-     * Удаление узла
-     *
-     * @param node элемент для удаления
-     */
-    @Override
-    public void remove(Node node) {
-        children.remove(node);
-    }
-
-    /**
-     * Получение родителя
-     *
-     * @return children
-     */
-    @Override
-    public List<Node> getChildren() {
-        return children;
-    }
-
-    /**
-     * Подсчет стоимости товаров в коробке.
-     * Если в коробке в меньшая коробка, то происходит обсчет
-     * меньшей коробки и тд
-     *
-     * @return цена
-     */
-    @Override
-    public Integer calcCost() {
-        int res = 0;
-        for (var item : children) res += item.calcCost();
-        return res;
-    }
-
-    @Override
-    public Node getParent() {
-        return parent;
-    }
-
-    @Override
-    public void setParent(Node parent) {
-        this.parent = parent;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Box box = (Box) o;
-        return Objects.equals(parent, box.parent) && Objects.equals(children, box.children);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(parent, children);
-    }
-
-    @Override
-    public String toString() {
-        return "Box{" +
-                "parent=" + parent +
-                ", children=" + children +
-                '}';
-    }
-}
-```
-
-```java
-/**
- * Конечный элемент иерархии - лист.
- */
-public interface Leaf extends Node {
-}
-```
-
-```java
-/**
- * Товар - конечный элемент
- */
-public class Item implements Leaf {
-    private Node parent;        //родитель
-    private Integer cost;       //цена товара
-
-    /**
-     * All parameters constructor
-     * @param parent родительский элемент
-     * @param cost цена товара
-     */
-    public Item(Node parent, Integer cost) {
-        this.parent = parent;
-        this.cost = cost;
-    }
-
-    public Item(Integer cost) {
-        this.cost = cost;
-    }
-
-    @Override
-    public Integer calcCost() {
-        return cost;
-    }
-
-    @Override
-    public Node getParent() {
-        return parent;
-    }
-
-    @Override
-    public void setParent(Node parent) {
-        this.parent = parent;
-    }
-
-    public Integer getCost() {
-        return cost;
-    }
-
-    public void setCost(Integer cost) {
-        this.cost = cost;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Item item = (Item) o;
-        return Objects.equals(parent, item.parent) && Objects.equals(cost, item.cost);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(parent, cost);
-    }
-
-    @Override
-    public String toString() {
-        return "Item{" +
-                "parent=" + parent +
-                ", cost=" + cost +
-                '}';
-    }
-}
-```
+---
 
 ### Плюсы данного паттерна
 
@@ -317,7 +117,9 @@ public class Item implements Leaf {
 
 ### Источники
 
-- Design Patterns with
-  Java: Composite
-- Введение в паттерны
-  проектирования: Компоновщик
+- [Refactoring.guru — Компоновщик](https://refactoring.guru/ru/design-patterns/composite)
+- [Refactoring.guru — Composite in Java (пример)](https://refactoring.guru/design-patterns/composite/java/example)
+- [Habr — Паттерн проектирования «Компоновщик» / «Composite»](https://habr.com/ru/articles/85166/)
+- [Habr — Шаблон проектирования: Composite](https://habr.com/ru/articles/733546/)
+- [Baeldung — Composite Design Pattern in Java](https://www.baeldung.com/java-composite-pattern)
+- [DigitalOcean — Composite Design Pattern in Java](https://www.digitalocean.com/community/tutorials/composite-design-pattern-in-java)

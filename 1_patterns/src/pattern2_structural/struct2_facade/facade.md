@@ -18,6 +18,11 @@
 комплексной подсистемой, делегируя вызовы соответствующим объектам внутри подсистемы. Это снижает связанность между
 клиентом и подсистемой, облегчает использование и понимание системы.
 
+Фасад тесно связан с **принципом наименьшего знания** (Law of Demeter / Principle of Least Knowledge): объект должен
+взаимодействовать только с ближайшими «друзьями» и не знать о внутренней структуре чужих подсистем. Фасад реализует
+этот принцип, предоставляя единственную точку входа — клиент общается только с фасадом, а не с десятками классов
+подсистемы напрямую.
+
 #### Применение
 
 Примеры, когда можно использовать паттерн фасад:
@@ -46,203 +51,87 @@
 
 #### Примеры паттерна фасад в стандартной библиотеке Java
 
-- Класс ```java.lang.Runtime``` предоставляет интерфейс к среде выполнения Java приложения. Он выступает в роли фасада,
+- Класс `java.lang.Runtime` предоставляет интерфейс к среде выполнения Java приложения. Он выступает в роли фасада,
   скрывая сложность взаимодействия с JVM и предоставляя простые методы для выполнения операций, таких как запуск внешних
   процессов, освобождение памяти и завершение приложения.
-- Класс ```java.util.Collections``` предоставляет статические методы, которые действуют как фасад для различных операций
+- Класс `java.util.Collections` предоставляет статические методы, которые действуют как фасад для различных операций
   над коллекциями, таких как сортировка, синхронизация, создание неизменяемых коллекций и т.д.
-- Класс ```java.util.Arrays``` предоставляет множество статических методов для работы с массивами, выступая в роли
+- Класс `java.util.Arrays` предоставляет множество статических методов для работы с массивами, выступая в роли
   фасада, скрывающего сложность работы с низкоуровневыми операциями над массивами.
 
-#### [Пример](code%2Fexample1_car%2FMain.java) с работой двигателя автомобиля
+#### [Пример 1](code%2Fexample1_car%2FMain.java) — Фасад запуска двигателя автомобиля
 
-Допустим у нас реализована правильная логика запуска вигателя автомобиля включающее множество шагов: включение
-инжектора, ввод
-топлива, контроль этого всго и тд и тп. Но пользователю (автомобилисту) нет необходимости знать о том как что происходит
-и в каком порядке. Он просто хочется сесть, завести машину и поехать.
+Допустим у нас реализована правильная логика запуска двигателя автомобиля, включающая множество шагов: включение
+инжектора, ввод топлива, контроль этого всего и т.д. Но пользователю (автомобилисту) нет необходимости знать о том, как
+что происходит и в каком порядке. Он просто хочет сесть, завести машину и поехать.
 
 Реализуем фасад, который внутри себя скрывает все процессы по запуску и останову двигателя автомобиля, а во внешний мир
-для пользователем дадим лишь кнопку вкл/выкл.
+для пользователя даст лишь кнопку вкл/выкл.
 
-Тем более прописав один раз правильный порядок выполнения действий и спрятов его пользователь не должен будет каждый раз
-вспомнимать и реализовывать правильный порядок.
+Тем более, прописав один раз правильный порядок выполнения действий и спрятав его, пользователь не должен будет каждый раз
+вспоминать и реализовывать правильный порядок.
 
-_Часть классов опущена, потому что не несет смысловой нагрузки_
+- [CarEngineFacade.java](code%2Fexample1_car%2FCarEngineFacade.java) — класс-фасад, скрывающий правильную
+  последовательность действий при запуске и останове двигателя. Координирует 5 компонентов подсистемы.
+- [Main.java](code%2Fexample1_car%2FMain.java) — демонстрация: сначала ручное управление компонентами (без фасада),
+  затем использование фасада.
+- Пакет `engine/` — 9 классов подсистемы двигателя (AirFlowController, FuelInjector, Starter, CoolingController,
+  CatalyticConverter и др.).
 
-Класс **фасад**, скрывающий правильную последовательность действий при запуске и останове двигателя.
+##### Плюсы:
 
-```java
-public class CarEngineFacade {
-    private static int DEFAULT_COOLING_TEMP = 90;
-    private static int MAX_ALLOWED_TEMP = 50;
-    private FuelInjector fuelInjector = new FuelInjector();
-    private AirFlowController airFlowController = new AirFlowController();
-    private Starter starter = new Starter();
-    private CoolingController coolingController = new CoolingController();
-    private CatalyticConverter catalyticConverter = new CatalyticConverter();
+- Наглядно показывает, как фасад упрощает сложную последовательность вызовов до двух методов.
+- Демонстрирует инкапсуляцию порядка операций — клиент защищён от ошибок в последовательности.
 
-    //Запуск двигателя
-    public void startEngine() {
-        fuelInjector.on();
-        airFlowController.takeAir();
-        fuelInjector.on();
-        fuelInjector.inject();
-        starter.start();
-        coolingController.setTemperatureUpperLimit(DEFAULT_COOLING_TEMP);
-        coolingController.run();
-        catalyticConverter.on();
-    }
+##### Минусы:
 
-    //Останов двигателя
-    public void stopEngine() {
-        fuelInjector.off();
-        catalyticConverter.off();
-        coolingController.cool(MAX_ALLOWED_TEMP);
-        coolingController.stop();
-        airFlowController.off();
-    }
-}
-```
+- Компоненты двигателя упрощены (только вывод в консоль) — в реальности каждый компонент имел бы собственную логику.
 
-```java
-/**
- * Эмитируем работу двигателя.
- * Все части двигателя находятся в пакете engine и не интересуют нас.
- */
-public class Main {
-    public static void main(String[] args) {
-        int DEFAULT_COOLING_TEMP = 90;
-        int MAX_ALLOWED_TEMP = 50;
-        FuelInjector fuelInjector = new FuelInjector();
-        AirFlowController airFlowController = new AirFlowController();
-        Starter starter = new Starter();
-        CoolingController coolingController = new CoolingController();
-        CatalyticConverter catalyticConverter = new CatalyticConverter();
+#### [Пример 2](code%2Fexample2_file%2FFileMain.java) — Фасад для работы с файлами
 
-        //Правильная последовательность действий для включения двигателя.
-        airFlowController.takeAir();
-        fuelInjector.on();
-        fuelInjector.inject();
-        starter.start();
-        coolingController.setTemperatureUpperLimit(DEFAULT_COOLING_TEMP);
-        coolingController.run();
-        catalyticConverter.on();
+Рассмотрим другой пример, где паттерн Фасад используется для упрощения операций с файловой системой. Фасад скрывает
+детали работы с `java.io.File`, `java.nio.file.Files` и `BufferedWriter`, предоставляя четыре простых метода.
 
-        //Правильная последовательность действий для выключения двигателя.
-        fuelInjector.off();
-        catalyticConverter.off();
-        coolingController.cool(MAX_ALLOWED_TEMP);
-        coolingController.stop();
-        airFlowController.off();
+- [FileFacade.java](code%2Fexample2_file%2FFileFacade.java) — интерфейс фасада, определяющий контракт для операций
+  с файлами (создание, удаление, запись, чтение).
+- [FileFacadeImpl.java](code%2Fexample2_file%2FFileFacadeImpl.java) — реализация фасада, делегирующая вызовы
+  стандартным классам Java IO/NIO.
+- [FileMain.java](code%2Fexample2_file%2FFileMain.java) — клиентский код, использующий фасад для работы с файлом.
 
-        System.out.println("-------------------------");
+##### Плюсы:
 
-        //Пользователю не интересно как работает двигатель и какова правильная последовательность действий.
-        //Пользователь хочет кнопку вкл/выкл, с которой легко работать и она не требует глубинных знаний.
-        //Здесь как раз таки и поможет паттерн фасад.
-        CarEngineFacade carEngineFacade = new CarEngineFacade();
+- Показывает вариант с выделением интерфейса — фасад можно подменить (например, для тестирования).
+- Клиент не знает, какие именно API (`java.io` или `java.nio`) используются внутри.
 
-        //нажали вкл
-        carEngineFacade.startEngine();
+##### Минусы:
 
-        //нажали выкл
-        carEngineFacade.stopEngine();
+- Простые операции с файлами могут не оправдывать введение фасада — пример скорее учебный.
 
-        //Пользователю не приходиться знать внутренностей и последовательность действий.
-        //К тому же если добавяться новые элементы или поменяется последовательность,
-        //то у пользователя также остануться лишь кнопки вкл/выкл
-    }
-}
-```
+#### [Пример 3](code%2Fexample3_order%2FOrderMain.java) — Фасад оформления онлайн-заказа
 
-#### [Пример](code%2Fexample1_car%2FMain.java) фасад для работы с файлами
+Пример из бизнес-логики: оформление заказа в интернет-магазине требует координации четырёх сервисов — склад, оплата,
+доставка, уведомления. Без фасада клиент вынужден сам знать порядок вызовов и реализовывать компенсирующие действия
+при ошибках на каждом этапе.
 
-Рассмотрим другой пример, где паттерн Фасад используется для упрощения операций с файловой системой.
+- [OrderFacade.java](code%2Fexample3_order%2FOrderFacade.java) — фасад, координирующий полный цикл оформления заказа
+  с компенсацией при ошибках (снятие резерва, возврат средств).
+- [OrderMain.java](code%2Fexample3_order%2FOrderMain.java) — демонстрация: сначала ручная координация 4 сервисов,
+  затем один вызов `orderFacade.placeOrder(...)`.
+- Пакет `service/` — 4 сервиса подсистемы:
+  [InventoryService](code%2Fexample3_order%2Fservice%2FInventoryService.java),
+  [PaymentService](code%2Fexample3_order%2Fservice%2FPaymentService.java),
+  [ShippingService](code%2Fexample3_order%2Fservice%2FShippingService.java),
+  [NotificationService](code%2Fexample3_order%2Fservice%2FNotificationService.java).
 
-```java
-import java.io.IOException;
+##### Плюсы:
 
-public interface FileFacade {
-    void createFile(String path) throws IOException;
+- Реалистичный бизнес-сценарий с несколькими зависимыми шагами.
+- Демонстрирует компенсирующие действия (saga-подобная логика) внутри фасада.
+- Наглядно показывает, насколько сложнее ручная координация без фасада.
 
-    void deleteFile(String path) throws IOException;
+##### Минусы:
 
-    void writeFile(String path, String content) throws IOException;
-
-    String readFile(String path) throws IOException;
-}
-```
-
-```java
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-public class FileFacadeImpl implements FileFacade {
-
-    @Override
-    public void createFile(String path) throws IOException {
-        File file = new File(path);
-        if (file.createNewFile()) {
-            System.out.println("File created: " + path);
-        } else {
-            System.out.println("File already exists: " + path);
-        }
-    }
-
-    @Override
-    public void deleteFile(String path) throws IOException {
-        Files.deleteIfExists(Paths.get(path));
-        System.out.println("File deleted: " + path);
-    }
-
-    @Override
-    public void writeFile(String path, String content) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(path));
-        writer.write(content);
-        writer.close();
-        System.out.println("Written to file: " + path);
-    }
-
-    @Override
-    public String readFile(String path) throws IOException {
-        String content = new String(Files.readAllBytes(Paths.get(path)));
-        System.out.println("Read from file: " + path);
-        return content;
-    }
-}
-```
-
-```java
-public class FileMain {
-    public static void main(String[] args) {
-        FileFacade fileFacade = new FileFacadeImpl();
-        String filePath = "example.txt";
-
-        try {
-            // Создание файла
-            fileFacade.createFile(filePath);
-
-            // Запись в файл
-            fileFacade.writeFile(filePath, "Hello, Facade Pattern!");
-
-            // Чтение из файла
-            String content = fileFacade.readFile(filePath);
-            System.out.println("File Content: " + content);
-
-            // Удаление файла
-            fileFacade.deleteFile(filePath);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-- ```FileFacade``` определяет простой интерфейс для операций с файлами.
-- ```FileFacadeImpl``` реализует этот интерфейс, используя стандартные классы Java для работы с файлами.
-- Клиентский код использует фасад для выполнения операций с файлом, не взаимодействуя напрямую с низкоуровневыми API.
+- В реальном приложении сервисы были бы асинхронными и распределёнными — синхронный пример упрощён.
 
 ### Плюсы данного паттерна
 
@@ -253,6 +142,8 @@ public class FileMain {
 - **Упрощение использования:** Позволяет клиентам выполнять сложные операции через несколько простых методов фасада.
 - **Повышение модульности:** Разделение ответственности между фасадом и подсистемой улучшает структуру кода и облегчает
   его поддержку.
+- **Соответствие принципу наименьшего знания:** Клиент знает только о фасаде и не зависит от внутренних классов
+  подсистемы.
 
 ### Недостатки данного паттерна
 
@@ -262,6 +153,8 @@ public class FileMain {
   структуру.
 - **Необходимость поддерживать фасад:** При изменении подсистемы может потребоваться обновление фасада, чтобы он
   соответствовал новым возможностям или интерфейсам.
+- **Риск превращения в «божественный объект»:** Если фасад берёт на себя слишком много ответственности, он может стать
+  трудно поддерживаемым.
 
 ### Заключение
 
@@ -275,5 +168,7 @@ public class FileMain {
 
 ### Источники
 
-- Design Patterns with Java: Facade
-- Введение в паттерны проектирования: Фасад
+- [Refactoring.guru — Фасад](https://refactoring.guru/ru/design-patterns/facade)
+- [Refactoring.guru — Facade in Java (пример)](https://refactoring.guru/design-patterns/facade/java/example)
+- [Baeldung — Facade Design Pattern in Java](https://www.baeldung.com/java-facade-pattern)
+- [DigitalOcean — Facade Design Pattern in Java](https://www.digitalocean.com/community/tutorials/facade-design-pattern-in-java)
