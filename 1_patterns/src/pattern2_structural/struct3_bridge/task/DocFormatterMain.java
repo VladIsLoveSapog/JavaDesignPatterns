@@ -34,11 +34,5 @@ public class DocFormatterMain {
 //        article.formatter = plainTextFormatter;
 //        System.out.println("\n=== Article with Plain Text Formatter ===");
 //        article.print();
-//
-//        // Добавление нового форматтера Markdown
-//        Formatter markdownFormatter = new MarkdownFormatter();
-//        book.formatter = markdownFormatter;
-//        System.out.println("\n=== Book with Markdown Formatter ===");
-//        book.print();
 //    }
 }
