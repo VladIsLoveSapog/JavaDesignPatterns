@@ -7,24 +7,26 @@
 
 #### Основная идея
 
-Паттерн "Команда" разделяет объект, инициирующий запрос, от объектов, которые его выполняют. Это достигается путем
-создания отдельных объектов-команд, каждая из которых реализует определенное действие.
+Паттерн Command отделяет объект, инициирующий запрос (**Invoker**), от объекта, который его выполняет (**Receiver**).
+Между ними стоит объект-команда, инкапсулирующий вызов нужного метода получателя вместе со всеми необходимыми
+параметрами. Инициатор работает с командой через общий интерфейс, не зная ни конкретного получателя, ни деталей операции.
 
 #### Применение
 
-Паттерн "Команда" рекомендуется использовать в следующих случаях:
+Паттерн Command рекомендуется использовать в следующих случаях:
 
-- **Необходимо параметризовать объекты с операциями:** Когда объекты должны быть настроены с разными действиями.
-- **Требуется поддержка отмены и повторного выполнения операций:** Когда нужно иметь возможность отменить или повторить
-  выполненные действия.
-- **Необходимо организовать очередь запросов или логи действий:** Для управления запросами в очереди или записи действий
-  для аудита.
-- **Требуется разделить инициирующий объект и объект, выполняющий действие:** Для уменьшения связанности между
-  компонентами системы.
+- **Параметризация объектов операциями:** когда объекты (кнопки, пункты меню, пульт) должны быть настроены с разными
+  действиями, не зная деталей их выполнения.
+- **Поддержка отмены и повторного выполнения (undo/redo):** когда каждая команда хранит достаточно информации, чтобы
+  выполнить обратное действие.
+- **Очередь запросов и отложенное выполнение:** когда команды нужно ставить в очередь, выполнять по расписанию или
+  передавать между потоками.
+- **Логирование и аудит действий:** когда последовательность выполненных операций нужно сохранить для воспроизведения
+  или анализа.
 
 ### Реализация
 
-1. Создайте общий интерфейс команд и определите в нём метод запуска.
+1. Создайте общий интерфейс команд и определите в нём метод запуска (например, `execute()`).
 2. Один за другим создайте классы конкретных команд. В каждом классе должно быть поле для хранения ссылки на один или
    несколько объектов-получателей, которым команда будет перенаправлять основную работу.
 
@@ -42,231 +44,121 @@
 
 ### Примеры
 
-#### Примеры стандартной библиотеки Java
+#### Примеры из стандартной библиотеки Java
 
-- Интерфейс ```Runnable``` можно рассматривать как реализацию паттерна "Команда". Он инкапсулирует задачу, которую можно
-  выполнить в отдельном потоке.
+- **`Runnable`** (`java.lang`) — классическая реализация паттерна Command. Инкапсулирует задачу (действие) в объект,
+  который можно передать в `Thread`, `ExecutorService` или пул потоков для отложенного или параллельного выполнения.
+- **`Action` / `AbstractAction`** (`javax.swing`) — инкапсулирует действие, которое привязывается к кнопкам, пунктам
+  меню и горячим клавишам. Один объект `Action` может быть разделён между несколькими UI-элементами.
+- **`Callable<V>`** (`java.util.concurrent`) — аналог `Runnable`, но возвращает результат и может бросить исключение.
+  Используется в `ExecutorService.submit()` для асинхронного выполнения команд с результатом.
+
+#### Лямбды как команды (Java 8+)
+
+Если интерфейс команды содержит **ровно один абстрактный метод** (например, только `execute()`), он является
+**функциональным интерфейсом** и может быть реализован лямбда-выражением или ссылкой на метод:
 
 ```java
-public class RunnableExample {
-    public static void main(String[] args) {
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("Task is running in a separate thread.");
-            }
-        };
-
-        Thread thread = new Thread(task);
-        thread.start();
-    }
-}
+// вместо new OpenTextFileOperation(file)
+executor.executeOperation(() -> file.open());
 ```
 
-- Интерфейс ```Action``` в пакете ```javax.swing``` реализует паттерн "Команда". Он инкапсулирует действие, которое
-  может быть выполнено, например, при нажатии кнопки.
-
-#### [Пример](code%2Fexample2_new_texteditor%2FMain.java) с текстовым редактором
-
-Создадим простую текстовую редакторскую систему, которая позволяет выполнять операции вставки и удаления текста с
-возможностью отмены и повтора этих операций.
-
-_Дополнительно: в данном примере также присутсвует паттерн **Снимок**._
+Если же интерфейс содержит **два метода** (`execute()` + `undo()`), он **не является функциональным** — для каждой
+команды необходим полноценный класс, хранящий состояние для отмены. Это наглядно демонстрируется в примерах 2 и 3.
 
 ---
 
-Интерфейс ```Command``` - команда, определяет методы ```execute()``` и ```undo()```.
+#### [Пример 1](code%2Fexample1_file_operations%2FMain.java) — Операции с файлами (без undo)
 
-```java
-// Команда
-public interface Command {
-    void execute();
+Простейшая реализация Command — первое знакомство с паттерном. Команды создаются как объекты и передаются исполнителю,
+который их выполняет и сохраняет в истории. Интерфейс `TextFileOperation` помечен `@FunctionalInterface`, что позволяет
+использовать лямбда-выражения.
 
-    void undo();
-}
-```
-
----
-
-Класс ```TextEditor``` - получатель. Класс над которым выполняются команды (получает команды).
-
-```java
-// Получатель
-public class TextEditor {
-    private StringBuilder text = new StringBuilder();
-
-    public void insert(int position, String content) {
-        if (position < 0 || position > text.length()) throw new IllegalArgumentException("Invalid position");
-
-        text.insert(position, content);
-        System.out.println("Inserted \"" + content + "\" at position " + position);
-    }
-
-    public void delete(int position, int length) {
-        if (position < 0 || position + length > text.length())
-            throw new IllegalArgumentException("Invalid position or length");
-
-        String removed = text.substring(position, position + length);
-        text.delete(position, position + length);
-        System.out.println("Deleted \"" + removed + "\" from position " + position);
-    }
-
-    public String getText() {
-        return text.toString();
-    }
-}
-```
+- [`TextFileOperation`](code%2Fexample1_file_operations%2FTextFileOperation.java) — интерфейс команды (Command), `@FunctionalInterface`
+- [`TextFile`](code%2Fexample1_file_operations%2FTextFile.java) — текстовый файл (Receiver)
+- [`OpenTextFileOperation`](code%2Fexample1_file_operations%2FOpenTextFileOperation.java) — команда открытия (ConcreteCommand)
+- [`SaveTextFileOperation`](code%2Fexample1_file_operations%2FSaveTextFileOperation.java) — команда сохранения (ConcreteCommand)
+- [`TextFileOperationExecutor`](code%2Fexample1_file_operations%2FTextFileOperationExecutor.java) — исполнитель (Invoker)
+- [`Main`](code%2Fexample1_file_operations%2FMain.java) — демонстрация выполнения команд и лямбда-выражения
 
 ---
 
-Конкретная команда - вставка - ```InsertCommand```.
+#### [Пример 2](code%2Fexample2_text_editor%2FMain.java) — Текстовый редактор с undo
 
-```java
-// Конкретная команда - вставка
-public class InsertCommand implements Command {
-    private TextEditor editor;
-    private int position;
-    private String content;
+Полноценная реализация Command с поддержкой отмены операций. Интерфейс `Command` содержит два метода (`execute()` и
+`undo()`), поэтому **не является функциональным**. `DeleteCommand` сохраняет удалённый текст для восстановления при
+отмене.
 
-    public InsertCommand(TextEditor editor, int position, String content) {
-        this.editor = editor;
-        this.position = position;
-        this.content = content;
-    }
+_Дополнительно: в данном примере также присутствует элемент паттерна **Снимок (Memento)** — `History` хранит
+последовательность команд для восстановления предыдущего состояния._
 
-    @Override
-    public void execute() {
-        editor.insert(position, content);
-    }
-
-    @Override
-    public void undo() {
-        editor.delete(position, content.length());
-    }
-}
-```
+- [`Command`](code%2Fexample2_text_editor%2FCommand.java) — интерфейс команды с undo (Command)
+- [`TextEditor`](code%2Fexample2_text_editor%2FTextEditor.java) — текстовый редактор (Receiver)
+- [`InsertCommand`](code%2Fexample2_text_editor%2FInsertCommand.java) — команда вставки (ConcreteCommand)
+- [`DeleteCommand`](code%2Fexample2_text_editor%2FDeleteCommand.java) — команда удаления, хранит `removedText` для undo (ConcreteCommand)
+- [`History`](code%2Fexample2_text_editor%2FHistory.java) — стек команд (вспомогательный, элемент Memento)
+- [`Editor`](code%2Fexample2_text_editor%2FEditor.java) — редактор, управляющий командами и историей (Invoker)
+- [`Main`](code%2Fexample2_text_editor%2FMain.java) — демонстрация вставки, удаления и отмены
 
 ---
 
-Конкретная команда - удаление - ```DeleteCommand```.
+#### [Пример 3](code%2Fexample3_smart_home%2FMain.java) — Умный дом
 
-```java
-public class DeleteCommand implements Command {
-    private TextEditor editor;
-    private int position;
-    private int length;
-    private String removedText;
+Классический пример GoF — управление устройствами через пульт. Один Invoker (`RemoteControl`) управляет разнородными
+устройствами (`Light`, `AirConditioner`) через единый интерфейс `Command`. `AirConditionerSetTempCommand` сохраняет
+предыдущую температуру для отмены.
 
-    public DeleteCommand(TextEditor editor, int position, int length) {
-        this.editor = editor;
-        this.position = position;
-        this.length = length;
-    }
-
-    @Override
-    public void execute() {
-        removedText = editor.getText().substring(position, position + length);
-        editor.delete(position, length);
-    }
-
-    @Override
-    public void undo() {
-        editor.insert(position, removedText);
-    }
-}
-```
-
----
-
-История ```History``` - паттерн Снимок. Позволяет перемещаться по истории команд.
-
-```java
-// История изменений
-// Паттерн снимок через Стек
-public class History {
-    private Deque<Command> commandHistory = new ArrayDeque<>();
-
-    public void push(Command cmd) {
-        commandHistory.push(cmd);
-    }
-
-    public Command pop() {
-        if (!commandHistory.isEmpty()) return commandHistory.pop();
-        return null;
-    }
-
-    public boolean isEmpty() {
-        return commandHistory.isEmpty();
-    }
-}
-```
-
----
-
-```java
-public class Main {
-    public static void main(String[] args) {
-        Editor editor = new Editor();
-
-        // Вставка текста
-        Command insertHello = new InsertCommand(editor.textEditor, 0, "Hello ");
-        editor.executeCommand(insertHello);
-        editor.printText(); // Output: "Hello "
-
-        Command insertWorld = new InsertCommand(editor.textEditor, editor.textEditor.getText().length(), "World!");
-        editor.executeCommand(insertWorld);
-        editor.printText(); // Output: "Hello World!"
-
-        // Удаление текста
-        Command deleteWorld = new DeleteCommand(editor.textEditor, 6, 6);
-        editor.executeCommand(deleteWorld);
-        editor.printText(); // Output: "Hello "
-
-        // Отмена последних операций
-        editor.undo(); // Отмена удаления "World!"
-        editor.printText(); // Output: "Hello World!"
-
-        editor.undo(); // Отмена вставки "World!"
-        editor.printText(); // Output: "Hello "
-
-        editor.undo(); // Отмена вставки "Hello "
-        editor.printText(); // Output: ""
-
-        editor.undo(); // Нет команд для отмены
-    }
-}
-```
+- [`Command`](code%2Fexample3_smart_home%2FCommand.java) — интерфейс команды с undo (Command)
+- [`Light`](code%2Fexample3_smart_home%2FLight.java) — свет (Receiver)
+- [`AirConditioner`](code%2Fexample3_smart_home%2FAirConditioner.java) — кондиционер (Receiver)
+- [`LightOnCommand`](code%2Fexample3_smart_home%2FLightOnCommand.java) — включить свет (ConcreteCommand)
+- [`LightOffCommand`](code%2Fexample3_smart_home%2FLightOffCommand.java) — выключить свет (ConcreteCommand)
+- [`AirConditionerOnCommand`](code%2Fexample3_smart_home%2FAirConditionerOnCommand.java) — включить кондиционер (ConcreteCommand)
+- [`AirConditionerOffCommand`](code%2Fexample3_smart_home%2FAirConditionerOffCommand.java) — выключить кондиционер (ConcreteCommand)
+- [`AirConditionerSetTempCommand`](code%2Fexample3_smart_home%2FAirConditionerSetTempCommand.java) — установить температуру, хранит `previousTemperature` для undo (ConcreteCommand)
+- [`RemoteControl`](code%2Fexample3_smart_home%2FRemoteControl.java) — пульт управления с историей и undo (Invoker)
+- [`Main`](code%2Fexample3_smart_home%2FMain.java) — демонстрация управления устройствами и отмены
 
 ### Плюсы данного паттерна
 
-- **Снижение связанности:** Отправитель запроса (```Invoker```) не зависит от получателя (```Receiver```) и конкретных
-  команд. Это облегчает изменение и расширение системы.
-- **Гибкость и расширяемость:** Легко добавлять новые команды без изменения существующих классов.
-- **Поддержка отмены операций:** Возможность реализации методов ```undo()``` для отмены выполненных команд.
-- **Организация запросов:** Позволяет хранить, передавать и управлять запросами как объектами.
-- **Реализация макрокоманд:** Возможность объединения нескольких команд в одну.
+- **Снижение связанности:** Отправитель запроса (Invoker) не зависит от получателя (Receiver) и конкретных команд.
+  Это облегчает изменение и расширение системы.
+- **Гибкость и расширяемость:** Легко добавлять новые команды без изменения существующих классов (Open/Closed Principle).
+- **Поддержка отмены операций:** Возможность реализации метода `undo()` для отмены выполненных команд.
+- **Организация запросов:** Позволяет хранить, передавать и управлять запросами как объектами — очереди, логи, макрокоманды.
+- **Реализация макрокоманд:** Возможность объединения нескольких команд в одну составную команду.
 
 ### Недостатки данного паттерна
 
 - **Увеличение числа классов:** Каждая новая команда требует создания нового класса, что может привести к увеличению
-  сложности проекта.
-- **Сложность отладки:** Из-за большого количества классов может быть сложнее отслеживать и понимать поток выполнения
-  программы.
-- **Небольшие преимущества для простых систем:** В простых приложениях использование паттерна может быть избыточным и
-  усложнять код.
+  сложности проекта. Частично решается лямбдами для простых команд (без undo).
+- **Сложность отладки:** Из-за косвенных вызовов (Invoker → Command → Receiver) может быть сложнее отслеживать поток
+  выполнения программы.
+- **Избыточность для простых систем:** Если в системе всего 1–2 операции без отмены, паттерн может быть излишним.
+
+### Сравнение с другими паттернами
+
+| Критерий | Command | Strategy | Observer |
+|---|---|---|---|
+| **Цель** | Инкапсулировать запрос как объект | Выбрать один алгоритм из семейства | Оповестить подписчиков об изменении |
+| **Кто инициирует** | Invoker вызывает команду | Клиент передаёт стратегию контексту | Субъект уведомляет наблюдателей |
+| **Undo** | Да (команда хранит состояние) | Нет (стратегия — чистый алгоритм) | Нет |
+| **Хранение истории** | Да (очередь, стек) | Нет | Нет |
+| **Типичный сценарий** | Отмена операций, очереди задач, макросы | Сортировка, маршрутизация, скидки | Событийные системы, GUI-обработчики |
+
+**Command vs Chain of Responsibility:** оба передают запрос от отправителя к получателю, но в Command связь один-к-одному
+(конкретная команда знает своего получателя), а в Chain of Responsibility запрос последовательно проходит по цепочке
+обработчиков, пока один из них не обработает его. Паттерны можно комбинировать: обработчики цепочки могут выполнять
+команды.
 
 ### Заключение
 
-Паттерн Команда (Command) является мощным инструментом для инкапсуляции запросов как объектов, что обеспечивает
-гибкость, расширяемость и упрощает управление действиями в системе. Он широко применяется в различных областях, таких
-как системы управления устройствами, GUI-приложения, системы логирования и многие другие.
+Паттерн Команда (Command) инкапсулирует запросы как объекты, обеспечивая гибкость, расширяемость и поддержку отмены.
+Он широко применяется в GUI-приложениях (обработка событий кнопок), системах управления устройствами (умный дом),
+системах логирования и транзакций.
 
-Паттерн "Команда" широко используется в графических интерфейсах (например, обработка событий кнопок), системах
-управления устройствами (умный дом), системах логирования, системах транзакций и многих других областях, где требуется
-гибкое управление действиями и их отмена.
-
-Однако, при использовании паттерна "Команда" важно учитывать его преимущества и недостатки, чтобы не создавать
-избыточную структуру классов в простых системах.
+При выборе паттерна учитывайте его преимущества и недостатки: для простых систем с одной-двумя операциями без отмены
+Command может быть избыточным.
 
 ### Источники
 

@@ -26,7 +26,7 @@
 
 ### Реализация
 
-1. Разбейте вашу функциональность на две части:   независимое ядро и опциональные зависимые части. Независимое ядро
+1. Разбейте вашу функциональность на две части: независимое ядро и опциональные зависимые части. Независимое ядро
    станет издателем. Зависимые части станут подписчиками.
 2. Создайте интерфейс подписчиков. Обычно, в нём достаточно определить единственный метод оповещения.
 3. Создайте интерфейс издателей и опишите в нём операции управления подпиской. Помните, что издатель должен работать
@@ -40,220 +40,107 @@
    объекта издателя нужные данные. Но при этом подписчик привяжет себя к конкретному классу издателя.
 7. Клиент должен создавать необходимое количество объектов подписчиков и подписывать их у издателей.
 
+---
+
+### Варианты реализации наблюдателя
+
+Паттерн «Наблюдатель» может реализовываться по-разному в зависимости от бизнес-требований. Ниже приведена
+таблица сравнения четырёх реализованных примеров:
+
+| Характеристика              | Пример 1                     | Пример 2                   | Пример 3                     | Пример 4                                 |
+|-----------------------------|------------------------------|-----------------------------|-------------------------------|-------------------------------------------|
+| **Домен**                   | Церковь и прихожане          | Каноническая реализация     | Температурный мониторинг      | Биржевая система                          |
+| **Тип данных уведомления**  | `String` (новость)           | `String` (состояние)        | `float` (температура)         | `String` + `double` (акция + цена)        |
+| **Модель передачи**         | Push                         | Push                        | Push                          | Push                                      |
+| **Регистрация**             | Самоподписка в конструкторе  | Внешняя (клиентом)          | Внешняя (клиентом)            | Внешняя (клиентом)                        |
+| **Что демонстрирует**       | Самоподписка, доменная модель | Минимальная структура паттерна | Условная реакция (порог 30°C) | Множественные Subject, отписка, история   |
+
+---
+
 ### Примеры
 
 #### Примеры стандартной Java библиотеки
 
 - **Swing**: В графическом интерфейсе Java (Swing) паттерн Observer широко используется. Например, элементы управления (
   кнопки, текстовые поля) уведомляют слушателей (event listeners) об изменениях состояния (например, нажатие кнопки,
-  ввод текста
+  ввод текста).
 - **JavaBeans**: Здесь используются события изменения свойств (property change events), где один объект может
   подписаться на уведомление об изменении свойств другого объекта.
-- **Устаревшая реализация в Java**: в Java сохранились устаревшие интерфейсы ```Observable``` и  ```Observer```. Однако
-  данный подход является устаревшим с **java 9**.
-- **Современные реализации в Java**: ```JavaBeans PropertyChangeSupport``` — для отслеживания изменений свойств
+- **Устаревшая реализация в Java**: в Java сохранились устаревшие интерфейсы `Observable` и `Observer`. Однако
+  данный подход является устаревшим с **Java 9**.
+- **Современные реализации в Java**: `JavaBeans PropertyChangeSupport` — для отслеживания изменений свойств
   объектов.
 - **Паттерны реактивного программирования**: такие как **Reactor** или **RxJava**, которые широко используются для
   обработки асинхронных потоков данных, предоставляя мощные возможности для наблюдения и управления изменениями в
   состояниях объектов.
 
-#### [Пример](code%2Fexample3_alarm%2FMain.java) реализации наблюделя
+---
 
-**Интерфейсы** ```Observer``` и ```Subject```: Определяют контракт для наблюдателей и наблюдаемого объекта.
+#### [Пример 1](code%2Fexample1_church%2FMain.java): Церковь и прихожане (самоподписка)
 
-```java
-interface Observer {
-    void update(float temperature);
-}
-```
+Прихожане подписываются на новости церкви прямо в конструкторе — **самоподписка**. При публикации новости
+церковь автоматически оповещает всех зарегистрированных прихожан. Демонстрирует доменную модель Observer
+с осмысленными именами (церковь, прихожанин, новость).
 
-```java
-interface Subject {
-    void addObserver(Observer observer);
-
-    void removeObserver(Observer observer);
-
-    void notifyObservers();
-}
-```
+| Роль в паттерне        | Класс                                                           | Описание                                               |
+|------------------------|-----------------------------------------------------------------|--------------------------------------------------------|
+| Интерфейс издателя     | [Observable](code%2Fexample1_church%2FObservable.java)          | Определяет методы `registerObserver()`, `removeObserver()`, `notifyObservers()` |
+| Интерфейс наблюдателя  | [Observer](code%2Fexample1_church%2FObserver.java)              | Определяет метод `update(String news)`                 |
+| Конкретный издатель     | [CatholicChurch](code%2Fexample1_church%2FCatholicChurch.java)  | Управляет списком прихожан, оповещает о новостях       |
+| Конкретный наблюдатель  | [Parishioner](code%2Fexample1_church%2FParishioner.java)        | Самоподписка в конструкторе, реакция на новости        |
+| Клиент                 | [Main](code%2Fexample1_church%2FMain.java)                      | Создаёт церковь, прихожан и публикует новость          |
 
 ---
 
-**Класс** ```TemperatureSensor```: Реализует Subject, хранит текущую температуру и уведомляет наблюдателей при ее
-изменении.
+#### [Пример 2](code%2Fexample2_base_observer%2FMain.java): Каноническая реализация
 
-```java
-class TemperatureSensor implements Subject {
-    private float temperature;
-    private List<Observer> observers;
+Минимальная классическая реализация паттерна Observer. Subject — это **конкретный класс** (не интерфейс),
+объединяющий роли Subject-интерфейса и ConcreteSubject в одном классе. Наблюдатели регистрируются
+клиентом и получают уведомления в виде текстовых сообщений.
 
-    public TemperatureSensor() {
-        observers = new ArrayList<>();
-    }
-
-    public void setTemperature(float temperature) {
-        this.temperature = temperature;
-        notifyObservers();
-    }
-
-    public float getTemperature() {
-        return temperature;
-    }
-
-    @Override
-    public void addObserver(Observer observer) {
-        observers.add(observer);
-    }
-
-    @Override
-    public void removeObserver(Observer observer) {
-        observers.remove(observer);
-    }
-
-    @Override
-    public void notifyObservers() {
-        for (Observer observer : observers) {
-            observer.update(temperature);
-        }
-    }
-}
-```
-
---- 
-
-**Классы** ```Display``` и ```Alarm```: Реализуют ```Observer```, реагируют на обновления температуры. ```Alarm```
-срабатывает только при превышении определенного порога.
-
-```java
-class Display implements Observer {
-    private String name;
-
-    public Display(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public void update(float temperature) {
-        System.out.println("Дисплей " + name + " отображает температуру: " + temperature + "°C");
-    }
-}
-```
-
-```java
-class Alarm implements Observer {
-    @Override
-    public void update(float temperature) {
-        if (temperature > 30.0f) {
-            System.out.println("Сигнал тревоги! Высокая температура: " + temperature + "°C");
-        }
-    }
-}
-```
+| Роль в паттерне        | Класс                                                                      | Описание                                              |
+|------------------------|----------------------------------------------------------------------------|-------------------------------------------------------|
+| Интерфейс наблюдателя  | [Observer](code%2Fexample2_base_observer%2FObserver.java)                  | Определяет метод `update(String message)`             |
+| Издатель (класс)       | [Subject](code%2Fexample2_base_observer%2FSubject.java)                    | Конкретный класс с `addObserver()`, `removeObserver()`, `setState()` |
+| Конкретный наблюдатель  | [ConcreteObserver](code%2Fexample2_base_observer%2FConcreteObserver.java)  | Выводит полученное сообщение в консоль                |
+| Клиент                 | [Main](code%2Fexample2_base_observer%2FMain.java)                          | Создаёт Subject, регистрирует наблюдателей, изменяет состояние |
 
 ---
 
-Создает экземпляр ```TemperatureSensor```, подписывает дисплеи и сигнал тревоги, изменяет температуру, что приводит к
-уведомлениям.
+#### [Пример 3](code%2Fexample3_alarm%2FMain.java): Температурный мониторинг (условная реакция)
 
-```java
-public class Main {
-    public static void main(String[] args) {
-        // Создаем наблюдаемый объект
-        TemperatureSensor sensor = new TemperatureSensor();
+Датчик температуры оповещает наблюдателей при каждом изменении показания. Display отображает температуру
+безусловно, а Alarm срабатывает **только при превышении порога** (30°C). Демонстрирует условную реакцию
+наблюдателя и push-модель с примитивным типом (`float`).
 
-        // Создаем наблюдателей
-        Display display1 = new Display("1");
-        Display display2 = new Display("2");
-        Alarm alarm = new Alarm();
+| Роль в паттерне        | Класс                                                                          | Описание                                              |
+|------------------------|--------------------------------------------------------------------------------|-------------------------------------------------------|
+| Интерфейс наблюдателя  | [Observer](code%2Fexample3_alarm%2FObserver.java)                              | Определяет метод `update(float temperature)`          |
+| Интерфейс издателя     | [Subject](code%2Fexample3_alarm%2FSubject.java)                                | Определяет методы `addObserver()`, `removeObserver()`, `notifyObservers()` |
+| Конкретный издатель     | [TemperatureSensor](code%2Fexample3_alarm%2FTemperatureSensor.java)            | Хранит температуру, оповещает при изменении           |
+| Конкретный наблюдатель  | [Display](code%2Fexample3_alarm%2FDisplay.java)                                | Безусловно отображает текущую температуру              |
+| Конкретный наблюдатель  | [Alarm](code%2Fexample3_alarm%2FAlarm.java)                                    | Срабатывает только при температуре > 30°C             |
+| Клиент                 | [Main](code%2Fexample3_alarm%2FMain.java)                                      | 2 дисплея + сигнализация, три изменения температуры   |
 
-        // Подписываем наблюдателей на объект
-        sensor.addObserver(display1);
-        sensor.addObserver(display2);
-        sensor.addObserver(alarm);
+---
 
-        // Изменяем состояние объекта
-        sensor.setTemperature(25.0f);
-        sensor.setTemperature(28.5f);
-        sensor.setTemperature(32.0f);
-    }
-}
-```
+#### [Пример 4](code%2Fexample4_stock_market%2FMain.java): Биржевая система (множественные субъекты, отписка, история)
 
-#### Ещё один пример реализации наблюделя
+Биржевая система с несколькими акциями (каждая — независимый издатель) и разными типами наблюдателей:
+инвестор с порогом покупки, трекер портфеля с историей цен и сервис ценовых уведомлений с диапазонными
+порогами. Демонстрирует множественные Subject'ы, отписку и stateful-наблюдателя.
 
-```java
-// Интерфейс Observer
-interface Observer {
-    void update(String message);
-}
-```
+| Роль в паттерне        | Класс                                                                                  | Описание                                                  |
+|------------------------|----------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| Интерфейс наблюдателя  | [StockObserver](code%2Fexample4_stock_market%2FStockObserver.java)                     | Определяет метод `update(String stockName, double price)` |
+| Интерфейс издателя     | [StockExchange](code%2Fexample4_stock_market%2FStockExchange.java)                     | Определяет методы `registerObserver()`, `removeObserver()`, `notifyObservers()` |
+| Конкретный издатель     | [Stock](code%2Fexample4_stock_market%2FStock.java)                                     | Акция с названием и ценой, независимый издатель            |
+| Конкретный наблюдатель  | [Investor](code%2Fexample4_stock_market%2FInvestor.java)                               | Инвестор с порогом покупки (условная реакция)              |
+| Конкретный наблюдатель  | [PortfolioTracker](code%2Fexample4_stock_market%2FPortfolioTracker.java)               | Ведёт историю цен в `Map<String, List<Double>>`          |
+| Конкретный наблюдатель  | [PriceAlertService](code%2Fexample4_stock_market%2FPriceAlertService.java)             | Уведомления при выходе за верхний/нижний порог             |
+| Клиент                 | [Main](code%2Fexample4_stock_market%2FMain.java)                                       | 2 акции, 4 наблюдателя, подписка/отписка, история цен     |
 
-```java
-// Класс Subject (наблюдаемый)
-class Subject {
-    private List<Observer> observers = new ArrayList<>();
-    private String state;
-
-    // Добавляем нового наблюдателя
-    public void addObserver(Observer observer) {
-        observers.add(observer);
-    }
-
-    // Удаляем наблюдателя
-    public void removeObserver(Observer observer) {
-        observers.remove(observer);
-    }
-
-    // Уведомляем всех наблюдателей о изменении состояния
-    public void notifyObservers() {
-        for (Observer observer : observers) {
-            observer.update(state);
-        }
-    }
-
-    // Метод изменения состояния
-    public void setState(String state) {
-        this.state = state;
-        notifyObservers();
-    }
-}
-```
-
-```java
-// Конкретный наблюдатель
-class ConcreteObserver implements Observer {
-    private String name;
-
-    public ConcreteObserver(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public void update(String message) {
-        System.out.println(name + " получил сообщение: " + message);
-    }
-}
-```
-
-```java
-// Демонстрация работы паттерна Observer
-public class Main {
-    public static void main(String[] args) {
-        Subject subject = new Subject();
-
-        // Создаем наблюдателей
-        Observer observer1 = new ConcreteObserver("Наблюдатель 1");
-        Observer observer2 = new ConcreteObserver("Наблюдатель 2");
-
-        // Подписываем наблюдателей на объект
-        subject.addObserver(observer1);
-        subject.addObserver(observer2);
-
-        // Меняем состояние объекта, что приводит к уведомлению наблюдателей
-        subject.setState("Изменение состояния!");
-    }
-}
-```
+---
 
 ### Плюсы данного паттерна
 
@@ -281,6 +168,11 @@ public class Main {
 **Паттерн Наблюдатель (Observer)** является мощным инструментом для создания гибких и расширяемых систем, позволяя
 объектам взаимодействовать между собой без жесткой связанности. Он широко используется в различных областях разработки,
 таких как пользовательские интерфейсы, системы уведомлений и реактивное программирование.
+
+Как показывают четыре реализованных примера, паттерн может быть адаптирован под различные сценарии: от доменной модели
+с самоподпиской (пример 1 — церковь), через каноническую реализацию (пример 2) и условную реакцию с порогом (пример 3 —
+температурный мониторинг), до сложной системы с множественными издателями, отпиской и историей состояний (пример 4 —
+биржевая система).
 
 Однако, как и любой паттерн, **Observer** имеет свои ограничения и должен использоваться осознанно, учитывая особенности
 конкретного проекта и его требований.

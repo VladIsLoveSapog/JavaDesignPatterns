@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48px" height="48px" viewBox="0 0 48 48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 47 (45396) - http://www.bohemiancoding.com/sketch -->
+    <title>Edit an avatar Copy</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <circle id="path-1" cx="9.27787933" cy="9.25956013" r="9.1224115"></circle>
+        <circle id="path-2" cx="9.27787933" cy="9.25956013" r="9.1224115"></circle>
+    </defs>
+    <g id="Blank-states" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Edit-an-avatar-Copy">
+            <g id="Group" transform="translate(1.000000, 0.593750)">
+                <circle id="Oval-2" fill="#0052CC" cx="21.8027074" cy="21.8027074" r="21.8027074"></circle>
+                <circle id="Oval-2" fill="#DEEBFF" cx="21.8027074" cy="15.2618952" r="6.54081221"></circle>
+                <path d="M10.9013537,35.4193069 C13.887448,37.8130495 17.6778675,39.2448733 21.8027074,39.2448733 C25.9275472,39.2448733 29.7179668,37.8130495 32.7040611,35.4193069 L32.7040611,25.9747882 C32.7040611,24.8720357 31.8119243,23.9829781 30.7114177,23.9829781 L12.893997,23.9829781 C11.7966929,23.9829781 10.9013537,24.8807405 10.9013537,25.9881866 C10.9013537,25.9881866 10.9013537,31.8926997 10.9013537,35.4193069 Z" id="Oval-10" fill="#DEEBFF" fill-rule="nonzero"></path>
+            </g>
+            <g id="Group-2" transform="translate(21.454102, 24.000000)">
+                <g id="Group-6" transform="translate(0.896281, 0.095020)">
+                    <g id="Group-Copy" transform="translate(0.717537, 0.310519)">
+                        <g id="Oval-3">
+                            <use fill="#0052CC" fill-rule="evenodd" xlink:href="#path-1"></use>
+                            <circle stroke="#FFFFFF" stroke-width="2" cx="9.27787933" cy="9.25956013" r="10.1224115"></circle>
+                        </g>
+                    </g>
+                </g>
+            </g>
+            <g id="Group-2-Copy" transform="translate(21.849609, 24.000000)">
+                <g id="Group-6" transform="translate(0.896281, 0.095020)">
+                    <g id="Group-Copy" transform="translate(0.717537, 0.310519)">
+                        <g id="Oval-3">
+                            <use fill="#0052CC" fill-rule="evenodd" xlink:href="#path-2"></use>
+                            <circle stroke="#FFFFFF" stroke-width="2" cx="9.27787933" cy="9.25956013" r="10.1224115"></circle>
+                        </g>
+                    </g>
+                </g>
+                <g id="Group-5-Copy" transform="translate(5.505378, 4.404303)" fill="#DEEBFF">
+                    <path d="M0.287138265,9.53024284 C0.197510584,9.9678002 0.58402996,10.3543196 1.02158732,10.2646919 L3.39236397,9.77920862 L0.772621539,7.15946619 L0.287138265,9.53024284 Z" id="Fill-1"></path>
+                    <path d="M10.1358511,1.73612009 L8.81571008,0.415356615 C8.57234602,0.172614978 8.25366982,0.05124416 7.93561604,0.05124416 C7.61693984,0.05124416 7.29826364,0.172614978 7.05489959,0.415356615 L0.982001762,6.48887685 L4.06295331,9.5698284 L10.1358511,3.49630816 C10.6219568,3.01020247 10.6219568,2.22222577 10.1358511,1.73612009 L10.1358511,1.73612009 Z" id="Fill-4"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

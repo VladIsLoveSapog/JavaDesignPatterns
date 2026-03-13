@@ -1,0 +1,29 @@
+package pattern3_behavior.behavior8_mediator.code.example3_airport;
+
+/**
+ * Конкретный коллега (Concrete Colleague) — грузовой самолёт.
+ *
+ * <p>Реализует получение уведомлений с пометкой "[Грузовой]",
+ * чтобы в консоли было видно, какой тип самолёта получил сообщение.
+ *
+ * <p><b>Роль в паттерне:</b> Concrete Colleague.
+ */
+public class CargoPlane extends Aircraft {
+
+    /**
+     * @param callSign позывной грузового самолёта
+     */
+    public CargoPlane(String callSign) {
+        super(callSign);
+    }
+
+    /**
+     * Получает уведомление от башни с пометкой типа самолёта.
+     *
+     * @param message текст уведомления от диспетчерской башни
+     */
+    @Override
+    public void receiveNotification(String message) {
+        System.out.println("[Грузовой] " + getCallSign() + " получил уведомление: " + message);
+    }
+}

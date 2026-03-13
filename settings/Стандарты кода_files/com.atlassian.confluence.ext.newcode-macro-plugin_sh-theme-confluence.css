@@ -1,0 +1,162 @@
+/* module-key = 'com.atlassian.confluence.ext.newcode-macro-plugin:sh-theme-confluence', location = 'sh/styles/shThemeConfluence.css' */
+/**
+ * SyntaxHighlighter
+ * http://alexgorbatchev.com/
+ *
+ * SyntaxHighlighter is donationware. If you are using it, please donate.
+ * http://alexgorbatchev.com/wiki/SyntaxHighlighter:Donate
+ *
+ * @version
+ * 2.1.364 (October 15 2009)
+ * 
+ * @copyright
+ * Copyright (C) 2004-2009 Alex Gorbatchev.
+ *
+ * @license
+ * This file is part of SyntaxHighlighter.
+ * 
+ * SyntaxHighlighter is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * SyntaxHighlighter is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with SyntaxHighlighter.  If not, see <http://www.gnu.org/copyleft/lesser.html>.
+ */
+/************************************
+ * Confluence Syntax Highlighter Theme
+ * (C) 2009 Jeroen Benckhuijsen
+ * http://confluence.atlassian.com/display/CONFEXT/New+Code+Macro
+ ************************************/
+
+.syntaxhighlighter.sh-confluence
+{
+	background-color: #fff !important;
+}
+
+/* Highlighed line number */
+.syntaxhighlighter.sh-confluence .line.highlighted .number
+{
+	color: black !important;
+}
+
+/* Highlighed line */
+.syntaxhighlighter.sh-confluence .line.highlighted.alt1,
+.syntaxhighlighter.sh-confluence .line.highlighted.alt2
+{
+	background-color: #e0e0e0 !important;
+}
+
+/* Gutter line numbers */
+.syntaxhighlighter.sh-confluence .line .number
+{
+	color: #afafaf !important;
+}
+
+/* Add border to the lines */
+.syntaxhighlighter.sh-confluence .line .content
+{
+	border-left: 3px solid #e0f0ff !important;
+	color: #000 !important;
+}
+
+.syntaxhighlighter.sh-confluence.printing .line .content 
+{
+	border: 0 !important;
+}
+
+.syntaxhighlighter.sh-confluence .toolbar
+{
+	background-color: #F8F8F8 !important;
+	border: #E7E5DC solid 1px !important;
+}
+
+.syntaxhighlighter.sh-confluence .toolbar a
+{
+	color: #a0a0a0 !important;
+}
+
+.syntaxhighlighter.sh-confluence .toolbar a:hover
+{
+	color: red !important;
+}
+
+/************************************
+ * Actual syntax highlighter colors.
+ ************************************/
+.syntaxhighlighter.sh-confluence .plain,
+.syntaxhighlighter.sh-confluence .plain a
+{ 
+	color: #000 !important;
+}
+
+.syntaxhighlighter.sh-confluence .comments,
+.syntaxhighlighter.sh-confluence .comments a
+{ 
+	color: #008200 !important;
+}
+
+.syntaxhighlighter.sh-confluence .string,
+.syntaxhighlighter.sh-confluence .string a
+{
+	color: #036 !important; 
+}
+
+.syntaxhighlighter.sh-confluence .keyword
+{ 
+	color: #369 !important; 
+	font-weight: bold !important; 
+}
+
+.syntaxhighlighter.sh-confluence .preprocessor 
+{ 
+	color: gray !important; 
+}
+
+.syntaxhighlighter.sh-confluence .variable 
+{ 
+	color: #a70 !important; 
+}
+
+.syntaxhighlighter.sh-confluence .value
+{ 
+	color: #090 !important; 
+}
+
+.syntaxhighlighter.sh-confluence .functions
+{ 
+	color: #ff1493 !important; 
+}
+
+.syntaxhighlighter.sh-confluence .constants
+{ 
+	color: #0066CC !important; 
+}
+
+.syntaxhighlighter.sh-confluence .script
+{ 
+	background-color: yellow !important;
+}
+
+.syntaxhighlighter.sh-confluence .color1,
+.syntaxhighlighter.sh-confluence .color1 a
+{ 
+	color: #808080 !important; 
+}
+
+.syntaxhighlighter.sh-confluence .color2,
+.syntaxhighlighter.sh-confluence .color2 a
+{ 
+	color: #ff1493 !important; 
+}
+
+.syntaxhighlighter.sh-confluence .color3,
+.syntaxhighlighter.sh-confluence .color3 a
+{ 
+	color: red !important; 
+}

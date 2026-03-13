@@ -1,6 +1,6 @@
 # Chain of Responsibility
 
-## Цепочка обязоностей
+## Цепочка обязанностей
 
 **Цепочка обязанностей** — это поведенческий паттерн проектирования, который позволяет передавать запросы
 последовательно по цепочке обработчиков. Каждый последующий обработчик решает, может ли он обработать запрос сам и стоит
@@ -12,7 +12,7 @@
 
 А теперь по-настоящему важный этап. Паттерн предлагает выстроить несколько обработчиков в цепь. Каждый обработчик будет
 хранить ссылку на следующий обработчик в цепи. А при получении запроса, он не только обработает его, но и передаст
-следующему объекту. Таким образом, можно сформировать длинную цепочкуобработчиков и передавать запрос в первый из них,
+следующему объекту. Таким образом, можно сформировать длинную цепочку обработчиков и передавать запрос в первый из них,
 зная о том, что вся цепочка сможет его обработать в определённом порядке. И последний штрих. Обработчик необязательно
 должен передавать запрос дальше. Причём эта особенность может быть использована по-разному.
 
@@ -24,7 +24,7 @@
 
 #### Применение
 
-Паттерн Цепочка Обязанностей рекомендуется использовать в следующих случаях:
+Паттерн Цепочка обязанностей рекомендуется использовать в следующих случаях:
 
 - **Неизвестно, какой объект обработает запрос:** Когда неясно, какой из объектов в цепочке сможет обработать запрос,
   или когда требуется, чтобы несколько объектов могли обработать запрос.
@@ -63,11 +63,27 @@
     - Запросы могут не достигать конца цепи.
     - Запросы могут достигать конца, оставаясь необработанными.
 
+---
+
+### Варианты поведения цепочки
+
+Паттерн «Цепочка обязанностей» может реализовываться по-разному в зависимости от бизнес-требований. Ниже приведена
+таблица сравнения шести реализованных примеров:
+
+| Характеристика     | Пример 1                                          | Пример 2                                     | Пример 3                                               | Пример 4                                          | Пример 5                                          | Пример 6                                          |
+|--------------------|---------------------------------------------------|-----------------------------------------------|---------------------------------------------------------|----------------------------------------------------|----------------------------------------------------|----------------------------------------------------|
+| **Домен**          | Уведомления                                       | Веб-сервер                                    | Валидация                                               | Логирование                                        | Скидки                                             | Закупки                                            |
+| **Поведение**      | Broadcast                                         | Transform                                     | С терминалом                                            | Всегда вся                                         | Условный                                           | Классическая                                       |
+| **Кто обрабатывает** | Все подходящие по приоритету                    | Каждый трансформирует запрос                  | Один или throw                                          | Все всегда                                         | Подходящие по условию                              | Ровно один                                         |
+| **Цепочка прерывается?** | Нет — всегда передаётся дальше              | Нет — каждый передаёт (трансформированный)    | Да — при обработке; throw в терминале                   | Нет — безусловная передача                         | Нет — всегда передаётся дальше                     | Да — после первого подходящего                     |
+
+---
+
 ### Примеры
 
-#### Пример из стандратной библиотеки Java
+#### Пример из стандартной библиотеки Java
 
-- **Пул объектов** ```Logger``` в пакете ```java.util.logging``` использует паттерн Цепочка Обязанностей для обработки
+- **Пул объектов** ```Logger``` в пакете ```java.util.logging``` использует паттерн Цепочка обязанностей для обработки
   логов через различные обработчики (```Handler```).
 
 **Как это работает:**
@@ -76,150 +92,116 @@
 - **Handler:** Определяет способ обработки логов (например, вывод в консоль, запись в файл).
 - **Filter:** Может использоваться для фильтрации логов перед обработкой.
 
-```java
-import java.util.logging.*;
+---
 
-public class LoggerChainExample {
-    public static void main(String[] args) {
-        Logger logger = Logger.getLogger("MyLogger");
-        logger.setUseParentHandlers(false); // Отключаем стандартные обработчики
+#### [Пример 1](code%2Fexample1_message%2FMain.java): Уведомления по приоритету (Broadcast)
 
-        // Создаем и добавляем консольный обработчик
-        ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setLevel(Level.INFO);
-        logger.addHandler(consoleHandler);
+Запрос проходит **всю цепочку с начала**. Каждый обработчик проверяет уровень приоритета сообщения: если его уровень
+не превышает уровень сообщения — обработчик срабатывает. Затем запрос **всегда** передаётся следующему обработчику.
+Таким образом, сообщение с высоким приоритетом активирует все обработчики (лог, email, SMS).
 
-        // Создаем и добавляем файловый обработчик
-        try {
-            FileHandler fileHandler = new FileHandler("app.log");
-            fileHandler.setLevel(Level.FINE);
-            logger.addHandler(fileHandler);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Логируем сообщения разного уровня
-        logger.severe("Severe message");
-        logger.warning("Warning message");
-        logger.info("Info message");
-        logger.fine("Fine message"); // Запишется только в файл
-    }
-}
-```
-
-#### [Пример](code%2Fexample2_web%2FMain.java): Обработка Запросов в Веб-Сервере
-
-Создадим цепочку обработчиков, которые поочередно обрабатывают запросы, пока один из них не сможет их обработать.
+| Роль в паттерне           | Класс                                                                              | Описание                                                       |
+|---------------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| Интерфейс обработчика     | [Handler](code%2Fexample1_message%2FHandler.java)                                  | Определяет методы `setNext()` и `handle()`                     |
+| Абстрактный обработчик    | [MessageSender](code%2Fexample1_message%2FMessageSender.java)                      | Хранит ссылку на следующий обработчик, реализует логику маршрутизации |
+| Конкретный обработчик     | [LogReportMessageSender](code%2Fexample1_message%2FLogReportMessageSender.java)    | Запись в лог (уровень `LOW`)                                   |
+| Конкретный обработчик     | [EmailMessageSender](code%2Fexample1_message%2FEmailMessageSender.java)            | Отправка email (уровень `MIDDLE`)                              |
+| Конкретный обработчик     | [SMSMessageSender](code%2Fexample1_message%2FSMSMessageSender.java)                | Отправка SMS (уровень `HIGH`)                                  |
+| Запрос                    | [PriorityLevel](code%2Fexample1_message%2FPriorityLevel.java)                      | Перечисление уровней приоритета: `LOW`, `MIDDLE`, `HIGH`       |
+| Клиент                    | [Main](code%2Fexample1_message%2FMain.java)                                        | Собирает цепочку и отправляет сообщения с разными приоритетами |
 
 ---
 
-Общий интерфейс обработчиков ```Handler```
+#### [Пример 2](code%2Fexample2_web%2FMain.java): Обработка веб-запросов (Transform)
 
-```java
-public interface Handler {
-    void setNextHandler(Handler handler);
+Запрос **попадает не обязательно в начало цепочки**. Каждый обработчик трансформирует запрос перед передачей дальше:
+`"authenticate"` → `"authorize"` → `"log"`. В `Main.java` демонстрируется отправка запроса напрямую в
+`AuthorizationHandler`, минуя аутентификацию — это показывает, что цепочку можно начать с любого узла.
 
-    void handleRequest(String request);
-}
-```
-
----
-
-Асбтрактный класс обработчика ```AbstarctHandler```
-
-Зачастую бывает оптимальнее создать асбтракный класс реализующий интерфейс и наследоваться от него. Либо работать сразу
-с абстрактным классом без интефрейсов. Абстрактный класс позволяет вынести логику связывания обработчиков в одно место.
-
-```java
-public abstract class AbstarctHandler implements Handler {
-    protected Handler nextHandler;
-
-    @Override
-    public void setNextHandler(Handler handler) {
-        this.nextHandler = handler;
-    }
-}
-```
+| Роль в паттерне           | Класс                                                                              | Описание                                                        |
+|---------------------------|-------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| Интерфейс обработчика     | [Handler](code%2Fexample2_web%2FHandler.java)                                      | Определяет методы `setNextHandler()` и `handleRequest()`        |
+| Абстрактный обработчик    | [AbstractHandler](code%2Fexample2_web%2FAbstractHandler.java)                      | Хранит ссылку на следующий обработчик                           |
+| Конкретный обработчик     | [AuthenticationHandler](code%2Fexample2_web%2FAuthenticationHandler.java)           | Обрабатывает `"authenticate"`, передаёт `"authorize"`           |
+| Конкретный обработчик     | [AuthorizationHandler](code%2Fexample2_web%2FAuthorizationHandler.java)             | Обрабатывает `"authorize"`, передаёт `"log"`                    |
+| Конкретный обработчик     | [LoggingHandler](code%2Fexample2_web%2FLoggingHandler.java)                        | Обрабатывает `"log"`, завершает цепочку                         |
+| Клиент                    | [Main](code%2Fexample2_web%2FMain.java)                                            | Три сценария: полная цепочка, неизвестный запрос, вход с середины |
 
 ---
 
-```AuthenticationHandler``` обрабатывает запрос "```authenticate```" и передает следующий запрос "```authorize```" в
-цепочке.
+#### [Пример 3](code%2Fexample3_validation%2FMain.java): Валидация документов (Терминальный узел с исключением)
 
-```java
-public class AuthenticationHandler extends AbstarctHandler {
+Цепочка валидаторов проверяет тип документа (JSON, XML, CSV). Если ни один валидатор не может обработать документ,
+запрос доходит до **терминального узла**, который выбрасывает `UnsupportedDocumentException`. Это гарантирует, что
+неподдерживаемые типы не будут молча проигнорированы.
 
-    @Override
-    public void handleRequest(String request) {
-        if (request.equalsIgnoreCase("authenticate")) {
-            System.out.println("AuthenticationHandler: Authenticated the request.");
-            if (Objects.nonNull(nextHandler)) nextHandler.handleRequest("authorize");
-        } else {
-            System.out.println("AuthenticationHandler: Cannot handle the request. Passing to next handler.");
-            if (Objects.nonNull(nextHandler)) nextHandler.handleRequest(request);
-        }
-    }
-}
-```
-
----
-
-```AuthorizationHandler``` обрабатывает запрос "```authorize```" и передает следующий запрос "```log```".
-
-```java
-public class AuthorizationHandler extends AbstarctHandler {
-    @Override
-    public void handleRequest(String request) {
-        if (request.equalsIgnoreCase("authorize")) {
-            System.out.println("AuthorizationHandler: Authorized the request.");
-            if (Objects.nonNull(nextHandler)) nextHandler.handleRequest("log");
-        } else {
-            System.out.println("AuthorizationHandler: Cannot handle the request. Passing to next handler.");
-            if (Objects.nonNull(nextHandler)) nextHandler.handleRequest(request);
-        }
-    }
-}
-```
+| Роль в паттерне           | Класс                                                                                          | Описание                                                        |
+|---------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| Запрос                    | [Document](code%2Fexample3_validation%2FDocument.java)                                         | Объект-запрос с типом (`JSON`, `XML`, `CSV`, `TXT`) и содержимым |
+| Интерфейс обработчика     | [DocumentValidator](code%2Fexample3_validation%2FDocumentValidator.java)                       | Определяет методы `setNext()` и `validate()`                    |
+| Абстрактный обработчик    | [BaseValidator](code%2Fexample3_validation%2FBaseValidator.java)                               | Логика маршрутизации: `canValidate()` → `doValidate()` / передача |
+| Конкретный обработчик     | [JsonValidator](code%2Fexample3_validation%2FJsonValidator.java)                               | Валидатор JSON-документов                                       |
+| Конкретный обработчик     | [XmlValidator](code%2Fexample3_validation%2FXmlValidator.java)                                 | Валидатор XML-документов                                        |
+| Конкретный обработчик     | [CsvValidator](code%2Fexample3_validation%2FCsvValidator.java)                                 | Валидатор CSV-документов                                        |
+| Терминальный обработчик   | [TerminalValidator](code%2Fexample3_validation%2FTerminalValidator.java)                       | Всегда выбрасывает исключение                                   |
+| Исключение                | [UnsupportedDocumentException](code%2Fexample3_validation%2FUnsupportedDocumentException.java) | Кастомное исключение для неподдерживаемых типов                 |
+| Клиент                    | [Main](code%2Fexample3_validation%2FMain.java)                                                 | JSON (успех), XML (успех), TXT (исключение)                     |
 
 ---
 
-```LoggingHandler``` обрабатывает запрос "```log```".
+#### [Пример 4](code%2Fexample4_logging%2FMain.java): Конвейер обработки логов (Цепочка всегда проходится полностью)
 
-```java
-public class LoggingHandler extends AbstarctHandler {
-    public void handleRequest(String request) {
-        if (request.equalsIgnoreCase("log")) System.out.println("LoggingHandler: Logged the request.");
-        else System.out.println("LoggingHandler: Cannot handle the request.");
-    }
-}
-```
+Каждый обработчик выполняет своё действие (добавление метки времени, форматирование, фильтрация, вывод) и **всегда**
+передаёт запись дальше — цепочка проходится полностью вне зависимости от содержимого запроса. Даже если запись помечена
+для фильтрации, она продолжает путь по конвейеру до конца.
+
+| Роль в паттерне           | Класс                                                                                      | Описание                                                       |
+|---------------------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| Запрос                    | [LogRecord](code%2Fexample4_logging%2FLogRecord.java)                                      | Объект-запрос: уровень, сообщение, метка времени, флаги        |
+| Интерфейс обработчика     | [LogProcessor](code%2Fexample4_logging%2FLogProcessor.java)                                | Определяет методы `setNext()` и `process()`                    |
+| Абстрактный обработчик    | [BaseLogProcessor](code%2Fexample4_logging%2FBaseLogProcessor.java)                        | Вызывает `doProcess()` и **безусловно** передаёт дальше        |
+| Конкретный обработчик     | [TimestampProcessor](code%2Fexample4_logging%2FTimestampProcessor.java)                    | Добавляет временную метку                                      |
+| Конкретный обработчик     | [FormatProcessor](code%2Fexample4_logging%2FFormatProcessor.java)                          | Форматирует сообщение                                          |
+| Конкретный обработчик     | [FilterProcessor](code%2Fexample4_logging%2FFilterProcessor.java)                          | Помечает `DEBUG`-записи для фильтрации (не останавливает цепочку) |
+| Конкретный обработчик     | [ConsoleOutputProcessor](code%2Fexample4_logging%2FConsoleOutputProcessor.java)            | Выводит в консоль (пропускает отфильтрованные)                 |
+| Клиент                    | [Main](code%2Fexample4_logging%2FMain.java)                                                | INFO (выводится), DEBUG (фильтруется) — оба прошли все 4 узла  |
 
 ---
 
-При отправке неизвестного запроса "```unknown```" все обработчики пытаются его обработать, но ни один из них не
-справляется.
+#### [Пример 5](code%2Fexample5_discount%2FMain.java): Расчёт скидок в магазине (Несколько узлов по условию)
 
-```java
-public class Main {
-    public static void main(String[] args) {
-        // Создание обработчиков
-        Handler authHandler = new AuthenticationHandler();
-        Handler authorizationHandler = new AuthorizationHandler();
-        Handler loggingHandler = new LoggingHandler();
+Заказ проходит через цепочку скидочных обработчиков. Каждый проверяет своё условие (новый клиент, сумма > 5000,
+промокод) и применяет скидку, если условие выполнено. Цепочка **не останавливается** — скидки **суммируются**.
 
-        // Настройка цепочки
-        authHandler.setNextHandler(authorizationHandler);
-        authorizationHandler.setNextHandler(loggingHandler);
+| Роль в паттерне           | Класс                                                                              | Описание                                                       |
+|---------------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| Запрос                    | [Order](code%2Fexample5_discount%2FOrder.java)                                     | Заказ: тип клиента, сумма, промокод, накопленная скидка        |
+| Интерфейс обработчика     | [DiscountHandler](code%2Fexample5_discount%2FDiscountHandler.java)                 | Определяет методы `setNext()` и `applyDiscount()`              |
+| Абстрактный обработчик    | [BaseDiscountHandler](code%2Fexample5_discount%2FBaseDiscountHandler.java)         | Вызывает `calculateDiscount()` и всегда передаёт дальше        |
+| Конкретный обработчик     | [NewCustomerDiscount](code%2Fexample5_discount%2FNewCustomerDiscount.java)         | 5% скидка для новых клиентов                                   |
+| Конкретный обработчик     | [BulkPurchaseDiscount](code%2Fexample5_discount%2FBulkPurchaseDiscount.java)       | 10% скидка при сумме > 5000                                    |
+| Конкретный обработчик     | [PromoCodeDiscount](code%2Fexample5_discount%2FPromoCodeDiscount.java)             | 15% скидка по промокоду `"SALE2024"`                           |
+| Клиент                    | [Main](code%2Fexample5_discount%2FMain.java)                                       | Три сценария: 5%, 25%, 30% суммарной скидки                    |
 
-        // Отправка запроса в цепочку
-        System.out.println("Client: Sending 'authenticate' request.");
-        authHandler.handleRequest("authenticate");
+---
 
-        System.out.println("\nClient: Sending 'unknown' request.");
-        authHandler.handleRequest("unknown");
-    }
-}
-```
+#### [Пример 6](code%2Fexample6_purchase%2FMain.java): Одобрение закупок (Классическая цепочка — один узел)
+
+Классическая реализация: запрос передаётся по цепочке от тимлида к директору. **Первый подходящий** обработчик (чей
+лимит не превышен) одобряет запрос, и цепочка **останавливается**. Если ни один обработчик не может одобрить — выводится
+сообщение об отказе.
+
+| Роль в паттерне           | Класс                                                                              | Описание                                                       |
+|---------------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| Запрос                    | [PurchaseRequest](code%2Fexample6_purchase%2FPurchaseRequest.java)                 | Запрос: описание и сумма закупки                               |
+| Интерфейс обработчика     | [Approver](code%2Fexample6_purchase%2FApprover.java)                               | Определяет методы `setNext()` и `approve()`                    |
+| Абстрактный обработчик    | [BaseApprover](code%2Fexample6_purchase%2FBaseApprover.java)                       | Логика: одобрить (стоп) / передать дальше / отказ              |
+| Конкретный обработчик     | [TeamLead](code%2Fexample6_purchase%2FTeamLead.java)                               | Тимлид — лимит 1 000                                           |
+| Конкретный обработчик     | [DepartmentHead](code%2Fexample6_purchase%2FDepartmentHead.java)                   | Начальник отдела — лимит 5 000                                 |
+| Конкретный обработчик     | [Director](code%2Fexample6_purchase%2FDirector.java)                               | Директор — без ограничений                                     |
+| Клиент                    | [Main](code%2Fexample6_purchase%2FMain.java)                                       | 500 (тимлид), 3500 (начальник), 15000 (директор)               |
+
+---
 
 ### Плюсы данного паттерна
 
@@ -230,26 +212,42 @@ public class Main {
 - **Повторное использование обработчиков:** Один и тот же обработчик может использоваться в разных цепочках.
 - **Упрощение добавления новых обработчиков:** Новые обработчики могут быть добавлены без изменения существующих
   классов.
+- **Разнообразие поведений:** Один и тот же паттерн может реализовать разные стратегии: классическую (один обработчик),
+  broadcast (все подходящие), конвейер (все всегда), терминальный узел с исключением.
 
 ### Недостатки данного паттерна
 
-- **Неопределенность обработки:** Запрос может остаться необработанным, если ни один из обработчиков не справится с ним.
-- **Отладка:** Может быть сложно отследить, какой обработчик в цепочке обработал запрос.
+- **Неопределённость обработки:** Запрос может остаться необработанным, если ни один из обработчиков не справится с ним
+  (решается терминальным узлом, как в примере 3).
+- **Отладка:** Может быть сложно отследить, какой обработчик в цепочке обработал запрос, особенно в длинных цепочках.
 - **Избыточность:** Создание множества обработчиков может привести к увеличению количества классов и усложнению
   структуры системы.
+- **Порядок имеет значение:** Неправильный порядок обработчиков может привести к некорректному поведению — порядок
+  элементов в цепочке должен быть хорошо продуман.
 
 ### Заключение
 
-Паттерн **Цепочка Обязанностей (Chain of Responsibility)** является мощным инструментом для управления запросами и
+Паттерн **Цепочка обязанностей (Chain of Responsibility)** является мощным инструментом для управления запросами и
 распределения ответственности между объектами без жесткой связки между ними. Он обеспечивает гибкость и расширяемость
 системы, позволяя легко добавлять новые обработчики и изменять существующие.
 
-Однако, при использовании паттерна необходимо учитывать возможные недостатки, такие как неопределенность обработки
+Как показывают шесть реализованных примеров, паттерн может быть адаптирован под различные сценарии: от классической
+цепочки, где ровно один обработчик берёт на себя запрос (пример 6), до конвейера, где все обработчики последовательно
+модифицируют объект (пример 4). Выбор конкретного варианта зависит от бизнес-требований:
+
+- Нужно уведомить всех? → **Broadcast** (пример 1)
+- Нужно трансформировать запрос поэтапно? → **Transform** (пример 2)
+- Нужно гарантировать обработку или ошибку? → **Терминальный узел** (пример 3)
+- Нужен конвейер без остановки? → **Всегда вся цепочка** (пример 4)
+- Нужно накопить результат по условиям? → **Условный** (пример 5)
+- Нужен ровно один обработчик? → **Классическая** (пример 6)
+
+Однако при использовании паттерна необходимо учитывать возможные недостатки, такие как неопределённость обработки
 запросов и сложность отладки.
 
 ### Источники
 
 - Design Patterns with Java: Chain of Responsibility
-- Введение в паттерны проектирования: Цепочка обязаностей
+- Введение в паттерны проектирования: Цепочка обязанностей
 - [Habr: Шаблон проектирования: Chain of Responsibility](https://habr.com/ru/articles/727454/)
 - [Baeldung: Chain of Responsibility Design Pattern in Java](https://www.baeldung.com/chain-of-responsibility-pattern)
