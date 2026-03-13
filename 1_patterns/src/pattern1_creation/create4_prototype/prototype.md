@@ -5,7 +5,7 @@
 **Прототип** — это порождающий паттерн проектирования, который позволяет копировать объекты, не вдаваясь в подробности
 их реализации.
 
-Прототип особенно полезен при создании сложных или ресурсоемких объектов. Чтобы не создавать индетичный/схожий сложный
+Прототип особенно полезен при создании сложных или ресурсоемких объектов. Чтобы не создавать идентичный/схожий сложный
 объект с нуля, мы просто копируем объект, а затем меняем нужные параметры.
 
 #### Основная идея
@@ -37,10 +37,10 @@
 #### Реализация в Java
 
 В ЯП **Java** паттерн прототип применяется реализацией интерфейса ```Cloneable``` классом и перегрузкой метода clone().
-Отдельное внимание стоит обратить на проблему поверхностого-глубокого копирования.
+Отдельное внимание стоит обратить на проблему поверхностного-глубокого копирования.
 
 Конструктор копирования в Java не любят. К тому же добавление в конструктор дополнительных действий по глубокому
-копированию не приветсвуется, такие особенности лучше вынести в метод ```clone()```.
+копированию не приветствуется, такие особенности лучше вынести в метод ```clone()```.
 
 **Важно!!!**
 
@@ -50,25 +50,119 @@
 
 #### Особенности реализации
 
-1. Операция копирования является потенциально опасной и требует обратки. Метод ```clone()``` наследуется от
+1. Операция копирования является потенциально опасной и требует обработки. Метод ```clone()``` наследуется от
    класса ```Object``` и поэтому вроде как поддерживается всеми классами и объектами. Точнее он у них доступен, но по
    умолчанию нереализован.
 2. Проверка того что объект может быть клонирован работает за счет маркерного интерфейса ```Cloneable```. Класс, который
    должен копироваться должен реализовывать данный интерфейс иначе вызов метода ```clone()``` вызовет исключение.
 3. Для правильного копирования сложных объектов необходимо грамотно работать с глубоким копированием - копированием
-   вложенных объектов. Для этого необходимо соблюсти _матрёшку_ правильного определние методов ```clone()```.
+   вложенных объектов. Для этого необходимо соблюсти _матрёшку_ правильного определения методов ```clone()```.
+
+---
+
+### Клонирование в Java: почему отдельный метод clone()?
+
+#### Историческая причина
+
+Метод `clone()` появился в Java 1.0 (1996) как стандартный механизм копирования объектов. В то время конструкторы
+копирования не были стандартизированы, и разработчики языка решили встроить механизм копирования на уровне JVM.
+
+#### Как работает Object.clone()
+
+`Object.clone()` — это `native` метод. JVM выполняет **побитовое копирование** памяти объекта, **минуя конструктор**.
+Новый объект создаётся без вызова `new`. Это делает `clone()` очень быстрым, но и потенциально опасным.
+
+#### Почему отдельный метод, а не конструктор?
+
+Конструктор копирования **не знает реальный тип** объекта при наследовании. Если у нас есть иерархия `Animal → Dog`,
+конструктор копирования `new Animal(animal)` всегда создаст `Animal`, даже если передан `Dog`. Полиморфизм не работает.
+
+Метод `clone()` решает эту проблему: через цепочку вызовов `super.clone()` он поднимается до `Object.clone()`, который
+**всегда** копирует объект правильного (реального) типа. Это ключевое преимущество при полиморфизме.
+
+```java
+// Конструктор копирования — теряет тип!
+Animal copy = new Animal(dog);      // copy instanceof Dog → false!
+
+// clone() — сохраняет тип
+Animal copy = (Animal) dog.clone(); // copy instanceof Dog → true!
+```
+
+#### Контракт метода clone() (из javadoc Object)
+
+При переопределении `clone()` должны выполняться следующие условия:
+
+| Условие                                  | Описание                       |
+|------------------------------------------|--------------------------------|
+| `x.clone() != x`                        | Разные ссылки (новый объект)   |
+| `x.clone().getClass() == x.getClass()`  | Тот же класс                   |
+| `x.clone().equals(x)`                   | Равенство по содержимому (по соглашению) |
+
+#### Маркерный интерфейс Cloneable
+
+Интерфейс `Cloneable` **не содержит методов**. Он лишь даёт JVM разрешение на клонирование объекта. Если класс не
+реализует `Cloneable`, вызов `clone()` выбросит `CloneNotSupportedException`.
+
+Это необычный дизайн: обычно интерфейс определяет поведение, но `Cloneable` лишь изменяет поведение метода в
+суперклассе (`Object.clone()`).
+
+---
+
+### Критика Cloneable: Джошуа Блох
+
+В книге **Effective Java** (Item 13: "Override clone judiciously") Джошуа Блох — один из главных архитекторов Java —
+подробно критикует механизм `Cloneable`:
+
+- **Обход конструктора**: `clone()` создаёт объект минуя конструктор, что может нарушить инварианты класса.
+- **Возвращаемый тип `Object`**: требуется приведение типов (хотя в Java 5+ можно использовать ковариантный
+  возвращаемый тип).
+- **Checked exception**: `CloneNotSupportedException` — checked exception, хотя в правильно написанном коде оно
+  никогда не произойдёт.
+- **Ответственность за глубокое копирование**: программист должен вручную копировать все мутабельные поля, и компилятор
+  не предупредит, если что-то забыто.
+
+> **Рекомендация Блоха**: используйте **конструктор копирования** или **фабричный метод копирования** вместо `clone()`.
+> Они безопаснее, прозрачнее и не зависят от хрупкого механизма `Cloneable`.
+
+---
+
+### Поверхностное vs Глубокое копирование
+
+| Тип поля             | Поверхностное копирование | Глубокое копирование | Безопасно при shallow? |
+|----------------------|--------------------------|----------------------|------------------------|
+| Примитивы (`int`, `double`) | Копия значения      | Копия значения       | Да                     |
+| Обёртки (`Integer`, `Long`) | Копия ссылки        | Копия ссылки         | Да (неизменяемые)      |
+| `String`             | Копия ссылки             | Копия ссылки         | Да (неизменяемый)      |
+| `Enum`               | Копия ссылки             | Копия ссылки         | Да (синглтон)          |
+| Мутабельный объект   | Копия ссылки (общий!)    | Новый объект         | **НЕТ — ОПАСНО!**     |
+| `List`, `Map`, `Set` | Копия ссылки (общая!)    | Новая коллекция      | **НЕТ — ОПАСНО!**     |
+
+**Поверхностное копирование** (`super.clone()`) — безопасно только для объектов, содержащих примитивы и неизменяемые
+типы.
+
+**Глубокое копирование** — необходимо, если объект содержит ссылки на мутабельные объекты или коллекции. Иначе оригинал
+и копия будут разделять одни и те же вложенные объекты, что приведёт к неожиданным побочным эффектам.
+
+---
+
+### Альтернативы Cloneable
+
+| Подход                     | Плюсы                                                      | Минусы                                             |
+|----------------------------|------------------------------------------------------------|----------------------------------------------------|
+| `clone()` + `Cloneable`   | Полиморфизм, скорость (native)                            | Хрупкий контракт, обход конструктора, checked exception |
+| Конструктор копирования    | Прозрачность, работает с `final` полями, нет исключений    | Не полиморфный (теряет тип при наследовании)       |
+| Фабричный метод `copyOf()` | Прозрачность, можно кешировать, гибкий возвращаемый тип    | Не полиморфный, дополнительный метод               |
+
+На практике в современной Java чаще используют конструктор копирования или фабричный метод. Механизм `Cloneable`
+остаётся актуальным в случаях, когда важен полиморфизм копирования (иерархия классов).
+
+---
 
 ### Примеры
 
-#### Проблема с примером из книги Швеца
+---
 
-В книге *Александра Швеца* рассказывается про прототип с общим хранилищем:
-
-1. Это уже частная реализация. Сам паттерн ограничивается только клонированием на самом деле.
-2. Это сложно и запутывает для начала.
-3. Такую вещь мы рассмотрим в ЛР2, где в Spring такой механизм используется по умолчанию.
-
-#### Пример [AutoMain.java](code%2FAutoMain.java)
+#### Пример 1: Глубокое копирование Auto [AutoMain.java](code/example1_deep_copy/AutoMain.java)
 
 Допустим у нас есть относительно сложный объект ```Auto``` и нам необходимо создать идентичный объект, который
 отличается лишь одним полем - ```color```.
@@ -88,8 +182,8 @@ import java.util.Objects;
  * <p>
  * При переопределении метода clone важно чтобы соблюдалось следующее:
  * - У объектов разные ссылки prototype != clone
- * - Классы у объектов индетичны prototype.getClass() == clone.getClass()
- * - Объекты индетичны после копирования (для этого надо правильно переопределить equals())
+ * - Классы у объектов идентичны prototype.getClass() == clone.getClass()
+ * - Объекты идентичны после копирования (для этого надо правильно переопределить equals())
  */
 public class Auto implements Cloneable {
     String owner;               //хозяин
@@ -103,64 +197,19 @@ public class Auto implements Cloneable {
     Integer accidentsNumber;    //кол-во аварий
     Long price;                 //стоимость
 
-    public Auto(String owner,
-                String brand,
-                Engine engine,
-                Gearbox gearbox,
-                Color color,
-                Integer mileage,
-                Integer seatCapacity,
-                Integer wheelCount,
-                Integer accidentsNumber,
-                Long price) {
-        this.owner = owner;
-        this.brand = brand;
-        this.engine = engine;
-        this.gearbox = gearbox;
-        this.color = color;
-        this.mileage = mileage;
-        this.seatCapacity = seatCapacity;
-        this.wheelCount = wheelCount;
-        this.accidentsNumber = accidentsNumber;
-        this.price = price;
+    public Auto(String owner, String brand, Engine engine,
+                Gearbox gearbox, Color color, Integer mileage,
+                Integer seatCapacity, Integer wheelCount,
+                Integer accidentsNumber, Long price) {
+        // присвоение полей
     }
 
-    /**
-     * Для проверки правильности копирования переопределим
-     * метод equals
-     * @param otherObject объект для сравнения
-     * @return true если объекты индентичны
-     */
-    @Override
-    public boolean equals(Object otherObject) {
-        if (Objects.isNull(otherObject)) return false;
-        if (this == otherObject) return true;
-        if (getClass() != otherObject.getClass()) return false;
-
-        Auto other = (Auto) otherObject;
-
-        return owner.equals(other.owner) &&
-                brand.equals(other.brand) &&
-                engine.equals(other.engine) &&
-                gearbox.equals(other.gearbox) &&
-                color.equals(other.color) &&
-                mileage.equals(other.mileage) &&
-                seatCapacity.equals(other.seatCapacity) &&
-                wheelCount.equals(other.wheelCount) &&
-                accidentsNumber.equals(other.accidentsNumber) &&
-                price.equals(other.price);
-    }
+    // equals(), hashCode(), toString(), геттеры и сеттеры
 
     /**
      * Метод копирования.
-     * Сначала см. Engine
-     * <p>
-     * Поскольку класс Auto в качестве поля содержит класс Engine,
-     * то "поверхностного" копирования недостаточно.
-     * Такая же проблема может быть при создании конструктора копирования в лоб.
-     * Обычно в Java для создания копий предпочитают всё же clone, а не конструктор копирования.
-     *
-     * @return копию автомобиля
+     * Поскольку класс Auto содержит вложенный объект Engine,
+     * "поверхностного" копирования недостаточно.
      */
     @Override
     protected Object clone() throws CloneNotSupportedException {
@@ -168,136 +217,21 @@ public class Auto implements Cloneable {
         copy.engine = (Engine) this.engine.clone(); //докопировали вложенные объекты
         return copy;
     }
-
-    @Override
-    public String toString() {
-        return this.getClass() +
-                "[owner=" + owner +
-                ",brand=" + brand +
-                ",engine=" + engine +
-                ",gearbox=" + gearbox +
-                ",color=" + color +
-                ",mileage=" + mileage +
-                ",seatCapacity=" + seatCapacity +
-                ",wheelCount=" + wheelCount +
-                ",accidentsNumber=" + accidentsNumber +
-                ",price=" + price +
-                "]";
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(
-                owner,
-                brand,
-                engine,
-                gearbox,
-                color,
-                mileage,
-                seatCapacity,
-                wheelCount,
-                accidentsNumber,
-                price
-        );
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Engine engine) {
-        this.engine = engine;
-    }
-
-    public Gearbox getGearbox() {
-        return gearbox;
-    }
-
-    public void setGearbox(Gearbox gearbox) {
-        this.gearbox = gearbox;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
-    public Integer getMileage() {
-        return mileage;
-    }
-
-    public void setMileage(Integer mileage) {
-        this.mileage = mileage;
-    }
-
-    public Integer getSeatCapacity() {
-        return seatCapacity;
-    }
-
-    public void setSeatCapacity(Integer seatCapacity) {
-        this.seatCapacity = seatCapacity;
-    }
-
-    public Integer getWheelCount() {
-        return wheelCount;
-    }
-
-    public void setWheelCount(Integer wheelCount) {
-        this.wheelCount = wheelCount;
-    }
-
-    public Integer getAccidentsNumber() {
-        return accidentsNumber;
-    }
-
-    public void setAccidentsNumber(Integer accidentsNumber) {
-        this.accidentsNumber = accidentsNumber;
-    }
-
-    public Long getPrice() {
-        return price;
-    }
-
-    public void setPrice(Long price) {
-        this.price = price;
-    }
 }
 ```
 
 ##### Перечисления ```Color``` и ```GearBox```
 
-Для перечислений паттерн **Прототип** не применим, поскольку каждое значение перечисления имеет только единсвтенный
+Для перечислений паттерн **Прототип** не применим, поскольку каждое значение перечисления имеет только единственный
 экземпляр.
 
 ```java
 public enum Color {
-    BLACK,
-    GRAY,
-    RED
+    BLACK, GRAY, RED
 }
 
 public enum Gearbox {
-    MANUAL,
-    AUTOMATIC
+    MANUAL, AUTOMATIC
 }
 ```
 
@@ -308,33 +242,244 @@ public enum Gearbox {
 
 ```java
 /**
- * Класс двигателя
- * Обратите внимание, что раз данный класс - record, то
- * методы toString, equals и hashCode для него по умолчанию переопределяются
- * правильно.
- * Это пригодиться при реализации данных методов в классе Auto
+ * Класс двигателя (record).
+ * Поскольку все поля — примитивы, поверхностного копирования достаточно.
  *
  * @param hp     лошадиные силы
- * @param volume объекм
+ * @param volume объём
  */
-public record Engine(Integer hp,
-                     Integer volume) implements Cloneable {
-    /**
-     * Метод копирования.
-     * <p>
-     * super.clone(); - выполянет поверхностное копирование.
-     * И поскольку в классе двигателя все поля являются примитивами
-     * поверхностного копирования достаточно.
-     *
-     * @return копия двигателя
-     * @throws CloneNotSupportedException копируемые объекты не поддерживают Cloneable
-     */
+public record Engine(Integer hp, Integer volume) implements Cloneable {
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 }
 ```
+
+##### Использование [AutoMain.java](code/example1_deep_copy/AutoMain.java)
+
+```java
+Auto blackAuto = new Auto("Vasya", "Mercedez", new Engine(300, 5),
+        Gearbox.AUTOMATIC, Color.BLACK, 0, 4, 4, 0, 6000000L);
+
+Auto redAuto = (Auto) blackAuto.clone();
+
+//Проверка контракта clone()
+System.out.println("Разные ссылки: " + (blackAuto != redAuto));           // true
+System.out.println("Одинаковый класс: " + (blackAuto.getClass() == redAuto.getClass())); // true
+System.out.println("Равны (equals): " + blackAuto.equals(redAuto));       // true
+
+redAuto.setColor(Color.RED);  //в скопированном авто поменяли цвет — оригинал не затронут
+```
+
+---
+
+#### Пример 2: Проблема поверхностного копирования [DocumentMain.java](code/example2_shallow_problem/DocumentMain.java)
+
+Этот пример демонстрирует **ключевую ловушку** механизма `clone()`: при поверхностном копировании мутабельные коллекции
+остаются **общими** между оригиналом и копией.
+
+##### Класс ```Document``` с двумя видами копирования
+
+```java
+public class Document implements Cloneable {
+    private String title;
+    private List<Paragraph> paragraphs;
+
+    // конструктор, геттеры и сеттеры
+
+    /** Поверхностное копирование — копируется только ссылка на список! */
+    public Document shallowClone() throws CloneNotSupportedException {
+        return (Document) super.clone();
+    }
+
+    /** Глубокое копирование — создаётся новый список, каждый абзац копируется отдельно. */
+    public Document deepClone() throws CloneNotSupportedException {
+        Document copy = (Document) super.clone();
+        copy.paragraphs = new ArrayList<>();
+        for (Paragraph p : this.paragraphs) {
+            copy.paragraphs.add(p.clone());
+        }
+        return copy;
+    }
+}
+```
+
+##### Демонстрация проблемы
+
+```java
+Document original = new Document("Курсовая работа");
+original.addParagraph(new Paragraph("Введение"));
+original.addParagraph(new Paragraph("Основная часть"));
+
+//Поверхностное копирование — список абзацев общий!
+Document shallowCopy = original.shallowClone();
+shallowCopy.addParagraph(new Paragraph("Заключение"));
+
+original.getParagraphs().size();  // 3 — а ожидали 2! Копия повлияла на оригинал!
+
+//Глубокое копирование — всё работает правильно
+Document deepCopy = original.deepClone();
+deepCopy.addParagraph(new Paragraph("Приложение"));
+
+original.getParagraphs().size();  // 3 — не изменилось, копия независима
+```
+
+---
+
+#### Пример 3: Конструктор копирования [UserProfileMain.java](code/example3_copy_constructor/UserProfileMain.java)
+
+Альтернатива `Cloneable` — конструктор копирования и статический фабричный метод. Нет `CloneNotSupportedException`,
+нет приведения типов, работает с `final` полями.
+
+##### Класс ```UserProfile```
+
+```java
+public class UserProfile {
+    private final String username;
+    private String email;
+    private Address address;
+    private List<String> interests;
+
+    public UserProfile(String username, String email, Address address, List<String> interests) {
+        // присвоение полей
+    }
+
+    /** Конструктор копирования — глубокое копирование всех мутабельных полей. */
+    public UserProfile(UserProfile other) {
+        this.username = other.username;                     //String — неизменяемый
+        this.email = other.email;                           //String — неизменяемый
+        this.address = new Address(other.address);          //глубокое копирование
+        this.interests = new ArrayList<>(other.interests);  //глубокое копирование коллекции
+    }
+
+    /** Статический фабричный метод копирования */
+    public static UserProfile copyOf(UserProfile other) {
+        return new UserProfile(other);
+    }
+
+    // геттеры и сеттеры
+}
+```
+
+##### Класс ```Address``` с конструктором копирования
+
+```java
+public class Address {
+    private String city;
+    private String street;
+
+    public Address(String city, String street) { /* ... */ }
+
+    /** Конструктор копирования */
+    public Address(Address other) {
+        this.city = other.city;
+        this.street = other.street;
+    }
+
+    // геттеры и сеттеры
+}
+```
+
+##### Использование
+
+```java
+UserProfile original = new UserProfile("ivan", "ivan@mail.ru",
+        new Address("Москва", "ул. Пушкина, 10"),
+        new ArrayList<>(Arrays.asList("Java", "Spring", "Паттерны")));
+
+//Конструктор копирования
+UserProfile copy = new UserProfile(original);
+copy.getAddress().setCity("Санкт-Петербург");
+//original.getAddress().getCity() → "Москва" — не изменился!
+
+//Фабричный метод
+UserProfile copy2 = UserProfile.copyOf(original);
+```
+
+---
+
+#### Пример 4: Реестр прототипов [RegistryMain.java](code/example4_prototype_registry/RegistryMain.java)
+
+Классическая реализация паттерна из книги GoF — **реестр прототипов**. Хранит шаблонные объекты и создаёт копии по
+ключу. Аналогичный механизм используется в Spring Framework (prototype scope).
+
+##### Абстрактный класс ```Shape``` — базовый прототип
+
+```java
+public abstract class Shape implements Cloneable {
+    private String color;
+    private int x;
+    private int y;
+
+    @Override
+    public Shape clone() {
+        try {
+            return (Shape) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    public abstract String getInfo();
+
+    // геттеры и сеттеры
+}
+```
+
+##### Конкретные фигуры
+
+```java
+public class Circle extends Shape {
+    private int radius;
+    // конструктор, геттеры и сеттеры
+}
+
+public class Rectangle extends Shape {
+    private int width;
+    private int height;
+    // конструктор, геттеры и сеттеры
+}
+```
+
+##### Реестр прототипов ```ShapeRegistry```
+
+```java
+public class ShapeRegistry {
+    private final Map<String, Shape> prototypes = new HashMap<>();
+
+    public void register(String key, Shape shape) {
+        prototypes.put(key, shape);
+    }
+
+    public Shape create(String key) {
+        Shape prototype = prototypes.get(key);
+        if (prototype == null) {
+            throw new IllegalArgumentException("Прототип не найден: " + key);
+        }
+        return prototype.clone();
+    }
+}
+```
+
+##### Использование
+
+```java
+ShapeRegistry registry = new ShapeRegistry();
+registry.register("red-circle", new Circle("красный", 0, 0, 50));
+registry.register("blue-rect", new Rectangle("синий", 0, 0, 100, 200));
+
+//Каждый вызов create() возвращает новый объект (клон шаблона)
+Shape circle1 = registry.create("red-circle");
+Shape circle2 = registry.create("red-circle");
+
+circle1.setX(10);  //изменение одного клона не затрагивает другие
+circle2.setX(100);
+
+System.out.println(circle1 != circle2);  // true — разные объекты
+```
+
+---
 
 ### Плюсы данного паттерна
 
@@ -356,6 +501,8 @@ public record Engine(Integer hp,
 
 ### Источники
 
-- Design Patterns with Java: Factory Method
-- Введение в паттерны проектирования: Фабричный метод
-- [JavaRush: Шаблон проектирования Prototype: реализация на Java.](https://javarush.com/groups/posts/6488-kofe-breyk-259-shablon-proektirovanija-prototype-realizacija-na-java-funkcionaljhnihe-interfeys)
+- Design Patterns with Java: Prototype
+- Введение в паттерны проектирования: Прототип
+- Effective Java, Third Edition, Joshua Bloch — Item 13: Override clone judiciously
+- [JavaRush: Шаблон проектирования Prototype](https://javarush.com/groups/posts/6488-kofe-breyk-259-shablon-proektirovanija-prototype-realizacija-na-java-funkcionaljhnihe-interfeys)
+- [Baeldung: Guide to clone() in Java](https://www.baeldung.com/java-deep-copy)

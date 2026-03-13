@@ -1,10 +1,6 @@
-package pattern1_creation.create4_prototype.code;
+package pattern1_creation.create4_prototype.code.example1_deep_copy;
 
 public class AutoMain {
-    /**
-     * Пример использования прототипа (копирования) на большом
-     * и сложно объекте.
-     */
     public static void main(String[] args) {
         //Конструктор на 10 параметров это сложно, много и страшно
         Auto blackAuto = new Auto(
@@ -21,7 +17,7 @@ public class AutoMain {
         );
 
         //Для создания такого же автомобиля, но красного цвета
-        //дабы не использовать гиганский конктуртор, в котором еще можно и ошибок наделать
+        //дабы не использовать гигантский конструктор, в котором еще можно и ошибок наделать
         //воспользуемся копированием
         Auto redAuto = null;
         try {
@@ -29,15 +25,20 @@ public class AutoMain {
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }
-        //Проверим, что после копирования получили одинаковые объекты
-        System.out.println("Автомобили одинаковые? " + blackAuto.equals(redAuto));
 
+        //Проверим контракт метода clone()
+        System.out.println("=== Проверка контракта clone() ===");
+        System.out.println("Разные ссылки (blackAuto != redAuto): " + (blackAuto != redAuto));
+        System.out.println("Одинаковый класс: " + (blackAuto.getClass() == redAuto.getClass()));
+        System.out.println("Объекты равны (equals): " + blackAuto.equals(redAuto));
+
+        System.out.println();
         redAuto.setColor(Color.RED);        //в скопированном авто поменяли цвет
-        System.out.println(redAuto);
+        System.out.println("=== После изменения цвета клона ===");
+        System.out.println("Оригинал: " + blackAuto);
+        System.out.println("Клон:     " + redAuto);
 
         //Таким образом при помощи прототипа (копирования) мы создали схожие объекты
         //В обход сложных методов конфигурирования.
-        //Возможно пример не очень показательный и блоки try/catch все портят,
-        //но это учебный пример. В реальном мире оно может пригодиться :)
     }
 }
