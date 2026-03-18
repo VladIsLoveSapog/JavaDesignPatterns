@@ -7,5 +7,6 @@ public class MainB {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ScanComponentConfig.class);
         var component = context.getBean(ComponentB.class);
         System.out.println(component);
+        context.close();
     }
 }

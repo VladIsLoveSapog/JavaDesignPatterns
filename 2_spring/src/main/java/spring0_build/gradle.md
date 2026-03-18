@@ -90,3 +90,69 @@ Gradle использует многие решения, которые прим
 Дождиаемся удачной сборки проекта и можно работать. В вашем проекте появяться нужные подключенные библиотеки.
 
 **Перечень нужных зависимостей можете скопировать из репозитория с примерами**.
+
+<h3>
+  Структура файла build.gradle.kts
+</h3>
+
+Файл **build.gradle.kts** — это скрипт сборки на языке Kotlin. Он состоит из нескольких ключевых секций:
+
+- **`plugins`** — подключает плагины к проекту. Например, `id("java")` добавляет поддержку Java: компиляцию, тестирование и упаковку в JAR.
+- **`repositories`** — указывает, откуда скачивать зависимости. `mavenCentral()` означает центральный репозиторий Maven, где хранится большинство популярных библиотек.
+- **`dependencies`** — перечисляет все внешние библиотеки и фреймворки, которые использует проект. Именно сюда вставляете строки, скопированные с Maven Repository.
+
+Пример реального файла build.gradle.kts из этого проекта:
+
+```kotlin
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.9.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+
+    // Версии пакетов Spring должны совпадать, поэтому версию лучше вынести в переменную
+    val springVersion = "6.1.5"
+
+    implementation("org.springframework:spring-core:${springVersion}")
+    implementation("org.springframework:spring-beans:${springVersion}")
+    implementation("org.springframework:spring-context-support:${springVersion}")
+    implementation("org.springframework:spring-aop:${springVersion}")
+
+    implementation("jakarta.annotation:jakarta.annotation-api:3.0.0")
+    implementation("org.aspectj:aspectjrt:1.9.22")
+    implementation("org.aspectj:aspectjweaver:1.9.22")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+```
+
+Обратите внимание: ключевое слово `implementation` означает, что зависимость нужна при компиляции и выполнении программы. `testImplementation` — только для тестов.
+
+<h3>
+  Gradle Wrapper (gradlew)
+</h3>
+
+В корне проекта находятся файлы **`gradlew`** (для Linux/macOS) и **`gradlew.bat`** (для Windows) — это Gradle Wrapper. Wrapper — это небольшой скрипт, который автоматически скачивает и использует ту версию Gradle, которая указана в файле `gradle/wrapper/gradle-wrapper.properties`. Это гарантирует, что все участники команды и CI/CD-системы собирают проект одной и той же версией Gradle, независимо от того, установлен ли Gradle на их машине и какой версии. Именно поэтому рекомендуется запускать сборку через `./gradlew`, а не через системную команду `gradle`.
+
+<h3>
+  Основные задачи Gradle (Tasks)
+</h3>
+
+Gradle выполняет работу через задачи (tasks). Самые часто используемые:
+
+| Команда | Что делает |
+|---|---|
+| `./gradlew build` | Компилирует проект, запускает тесты и собирает JAR |
+| `./gradlew clean` | Удаляет папку `build` с результатами предыдущей сборки |
+| `./gradlew test` | Запускает только тесты |
+| `./gradlew dependencies` | Выводит дерево всех зависимостей проекта |
+
+На Windows вместо `./gradlew` используйте `gradlew.bat` или просто `gradlew` в командной строке.

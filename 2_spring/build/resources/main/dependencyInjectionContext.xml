@@ -28,4 +28,13 @@
         <constructor-arg name="text" value="Bean with Dependency Injection"/>
         <constructor-arg name="number" value="1000"/>
     </bean>
+
+    <!-- Бин, в который происходит внедрение зависимости через сеттер.
+         Внедрение происходит при помощи <property ref="..."/>,
+         где ref указывает на id бина, который будет внедрен.
+         В отличие от constructor-arg, здесь используется setter-метод. -->
+    <bean class="spring4_di.xml.bean.FlexibleBean">
+        <property name="exampleBean" ref="exampleBean"/>
+        <property name="text" value="Bean with Setter DI"/>
+    </bean>
 </beans>

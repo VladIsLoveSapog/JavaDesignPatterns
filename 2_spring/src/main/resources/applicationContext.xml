@@ -14,7 +14,7 @@
          class - путь к классу, бин которого описывается. -->
 
     <bean id="firstStudent" class="spring3_ioc.xml.bean.Student">
-        <!-- Инициализация через конструктор (используется только констурктор со всеми параметрами!)
+        <!-- Инициализация через конструктор (используется только конструктор со всеми параметрами!)
              Аргументы указываются в теге constructor-arg в формате ключ значение -->
         <constructor-arg name="name" value="Vasya"/>
         <constructor-arg name="age" value="20"/>
@@ -46,7 +46,7 @@
           scope="prototype">
         <!-- Инициализация через внешний (определенный в классе StudentBeanFactory) фабричный метод.
              В factory-method прописывается название фабричного метода.
-             В factory-context.bean="helloFactory" указывается id бина фабрики -->
+             В factory-bean="StudentBeanFactory" указывается id бина фабрики -->
         <constructor-arg name="name" value="Anna"/>
         <constructor-arg name="age" value="24"/>
         <constructor-arg name="group" value="22-IVT-3"/>

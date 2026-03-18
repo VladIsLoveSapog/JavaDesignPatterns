@@ -5,9 +5,9 @@
        http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!-- Scope для бина задается в соответсвующем свойстве. -->
-    <bean class="spring5_scope.singleton.SingletonPerson" scope="singleton">
+    <bean class="spring7_scope.singleton.SingletonPerson" scope="singleton">
         <constructor-arg name="name" value="Petr"/>
-        <constructor-arg name="lastName" value="Petrov"/>
+        <constructor-arg name="lastname" value="Petrov"/>
         <constructor-arg name="age" value="25"/>
     </bean>
 </beans>

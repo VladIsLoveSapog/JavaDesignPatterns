@@ -20,10 +20,10 @@ import java.util.Objects;
 @Component("bySetters")
 @PropertySource("component.property")
 public class ComponentBySetters {
-    String host;
-    String port;
-    String creationsType;
-    Integer connections;
+    private String host;
+    private String port;
+    private String creationsType;
+    private Integer connections;
 
     public ComponentBySetters() {
     }

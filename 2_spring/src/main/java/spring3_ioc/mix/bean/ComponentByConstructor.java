@@ -20,10 +20,10 @@ import java.util.Objects;
 @Component
 @PropertySource("component.property")
 public class ComponentByConstructor {
-    String host;
-    String port;
-    String creationsType;
-    Integer connections;
+    private String host;
+    private String port;
+    private String creationsType;
+    private Integer connections;
 
     /**
      * Конструктор с параметрами.

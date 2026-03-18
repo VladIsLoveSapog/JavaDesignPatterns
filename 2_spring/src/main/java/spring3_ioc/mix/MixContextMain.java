@@ -6,7 +6,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class MixContextMain {
     public static void main(String[] args) {
-        //Чтение контекста из xml файла с автосканированием патеков
+        //Чтение контекста из xml файла с автосканированием пакетов
         //В файле указаны пакеты для сканирования
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("autoScanContext.xml");
 
@@ -18,8 +18,7 @@ public class MixContextMain {
         var componentBySetters = context.getBean("bySetters", ComponentBySetters.class);
         System.out.println(componentBySetters);
 
-        //Контекст необходимо закрывать.
-        //Приложение не сработает пока не будет закрыт контекст.
+        //Контекст необходимо закрывать для корректного освобождения ресурсов.
         context.close();
     }
 }
