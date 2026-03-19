@@ -8,7 +8,6 @@ package pattern1_creation.create2_factory_method.code.example5_complex;
  * Обе создают пиццу, но ведут себя по-разному благодаря состоянию фабрики.
  */
 public class PizzaMain {
-
     public static void main(String[] args) {
         System.out.println("=== Сложная фабрика: объект с состоянием и логикой ===");
         System.out.println();

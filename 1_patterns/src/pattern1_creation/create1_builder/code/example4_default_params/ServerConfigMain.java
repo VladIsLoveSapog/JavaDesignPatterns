@@ -7,7 +7,6 @@ package pattern1_creation.create1_builder.code.example4_default_params;
  * Минимальный вызов: new ServerConfig.Builder("app").build()
  */
 public class ServerConfigMain {
-
     public static void main(String[] args) {
 
         System.out.println("=== Пример 4: Builder с параметрами по умолчанию — ServerConfig ===\n");

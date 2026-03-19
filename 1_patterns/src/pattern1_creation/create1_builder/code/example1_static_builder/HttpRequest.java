@@ -94,9 +94,9 @@ public class HttpRequest {
 
         // Опциональные — с умолчаниями
         private final Map<String, String> headers = new HashMap<>();    // пустая карта заголовков
-        private String body;                                            // тело отсутствует
+        private String body = "";                                            // тело отсутствует
         private int timeout = 30;                                       // 30 секунд — разумное умолчание
-        private String authToken;                                       // без авторизации
+        private String authToken = "";                                       // без авторизации
         private boolean followRedirects;                                // следовать редиректам
 
         /**
