@@ -12,7 +12,9 @@ public class Address {
         this.street = street;
     }
 
-    /** Конструктор копирования */
+    /**
+     * Конструктор копирования
+     */
     public Address(Address other) {
         this.city = other.city;
         this.street = other.street;
