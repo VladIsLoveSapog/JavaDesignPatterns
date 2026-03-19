@@ -7,7 +7,6 @@ package pattern1_creation.create1_builder.code.example3_interface_builder;
  * и не знает, Email это, SMS или Push.
  */
 public class NotificationMain {
-
     public static void main(String[] args) {
 
         System.out.println("=== Пример 3: Builder через интерфейс — система уведомлений ===\n");
