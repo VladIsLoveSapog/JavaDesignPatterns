@@ -8,6 +8,8 @@
 1. **Создать абстрактные продукты**:
     - **Button (Кнопка)**: Интерфейс с методом ```render()```.
     - **Checkbox (Чекбокс)**: Интерфейс с методом ```render()```.
+    - Метод `render()` можно реализовать в виде вывода через `System.out.println` сообщений вида:
+      `Отрисована кнопка для мака`, `Отрисован checkbox для Windows` и тд.
 2. **Создать конкретные продукты для трёх операционных систем**:
     - **WindowsButton** и **WindowsCheckbox**: Реализуют интерфейсы ```Button``` и ```Checkbox``` соответственно.
     - **MacButton** и **MacCheckbox**: Реализуют интерфейсы ```Button``` и ```Checkbox``` соответственно.
@@ -16,7 +18,9 @@
     - **GUIFactory**: Интерфейс с методами createButton() и createCheckbox(), возвращающими объекты типов Button и
       Checkbox соответственно.
 4. **Создать конкретные фабрики для каждой операционной системы:**
-- **WindowsFactory**: Реализует интерфейс ```GUIFactory``` и создаёт объекты ```WindowsButton``` и ```WindowsCheckbox```.
+
+- **WindowsFactory**: Реализует интерфейс ```GUIFactory``` и создаёт объекты ```WindowsButton``` и
+  ```WindowsCheckbox```.
 - **MacFactory**: Реализует интерфейс ```GUIFactory``` и создаёт объекты ```MacButton``` и ```MacCheckbox```.
 - **LinuxFactory**: Реализует интерфейс ```GUIFactory``` и создаёт объекты ```LinuxButton``` и ```LinuxCheckbox```.
 
